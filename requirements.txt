@@ -2,3 +2,5 @@ streamlit
 boto3
 pyngrok
 python-dotenv
+python-docx
+debugpy

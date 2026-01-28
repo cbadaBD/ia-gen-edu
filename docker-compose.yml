@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: content_edu_app
+    ports:
+      - "8501:8501"
+    volumes:
+      # Montar carpeta de outputs para persistencia
+      - ./outputs:/app/outputs
+      # Montar carpeta Desktop del host (opcional)
+      - ${HOME}/Desktop/content_edu_outputs:/app/desktop_outputs
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app/src
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
+      - AWS_PROFILE=${AWS_PROFILE:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

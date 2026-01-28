@@ -1,0 +1,64 @@
+# Entornos virtuales
+venv/
+env/
+.venv/
+
+# Archivos de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Git
+.git/
+.gitignore
+
+# Documentación (opcional)
+*.md
+!README.md
+
+# Archivos de configuración local
+pyrightconfig.json
+*.json
+!docker-compose.yml
+
+# Notebooks
+*.ipynb
+
+# Scripts de desarrollo
+setup.sh
+run_streamlit.sh
+
+# Outputs (se montan como volumen)
+outputs/
+*.docx
+*.txt
+!requirements.txt
+
+# Imágenes del proyecto
+imagenes/
