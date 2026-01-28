@@ -257,21 +257,12 @@ def validar_y_corregir_formato_tabla(contenido):
         if dentro_tabla:
             # Verificar si es una línea de tabla (tiene | y al menos 2 columnas)
             if '|' in linea:
-                # Procesar contenido suelto acumulado antes de esta nueva fila
-                if contenido_suelto_actual and ultima_fila_tabla_idx >= 0:
-                    # Agregar contenido suelto a la última fila
-                    ultima_fila = lineas_corregidas[ultima_fila_tabla_idx]
-                    partes = ultima_fila.rsplit('|', 1)
-                    if len(partes) == 2:
-                        contenido_agregar = '\n'.join(contenido_suelto_actual).strip()
-                        if contenido_agregar:
-                            nuevo_contenido = partes[1].rstrip()
-                            if nuevo_contenido:
-                                nuevo_contenido += '\n' + contenido_agregar
-                            else:
-                                nuevo_contenido = contenido_agregar
-                            # Actualizar la última fila en lineas_corregidas
-                            lineas_corregidas[ultima_fila_tabla_idx] = partes[0] + '|' + nuevo_contenido
+                # Primero procesar contenido suelto acumulado convirtiéndolo en filas de tabla
+                if contenido_suelto_actual:
+                    for contenido_suelto in contenido_suelto_actual:
+                        if contenido_suelto.strip():
+                            fila_tabla = f"| | {contenido_suelto.strip()} |"
+                            lineas_corregidas.append(fila_tabla)
                     contenido_suelto_actual = []
                 
                 # Verificar que tenga el formato correcto de tabla
@@ -282,33 +273,31 @@ def validar_y_corregir_formato_tabla(contenido):
                     lineas_corregidas.append(linea)
                     ultima_fila_tabla_idx = len(lineas_corregidas) - 1
                 else:
-                    # No es una fila válida, agregar como contenido suelto
+                    # No es una fila válida, convertir en fila de tabla con item vacío
                     if linea:
-                        contenido_suelto_actual.append(linea)
+                        fila_tabla = f"| | {linea} |"
+                        lineas_corregidas.append(fila_tabla)
+                        ultima_fila_tabla_idx = len(lineas_corregidas) - 1
             else:
-                # Línea sin |, es contenido suelto que debe ir en la última celda
+                # Línea sin |, es contenido suelto que debe convertirse en fila de tabla
                 if linea:  # Solo agregar si no está vacía
-                    contenido_suelto_actual.append(linea)
+                    # Convertir contenido suelto en fila de tabla con item vacío
+                    fila_tabla = f"| | {linea} |"
+                    lineas_corregidas.append(fila_tabla)
+                    ultima_fila_tabla_idx = len(lineas_corregidas) - 1
+                    contenido_suelto_actual = []  # Ya se procesó
         else:
             # Contenido antes de la tabla, ignorar completamente
             pass
         
         i += 1
     
-    # Procesar cualquier contenido suelto restante al final
-    if contenido_suelto_actual and ultima_fila_tabla_idx >= 0 and lineas_corregidas:
-        ultima_fila = lineas_corregidas[ultima_fila_tabla_idx]
-        partes = ultima_fila.rsplit('|', 1)
-        if len(partes) == 2:
-            contenido_agregar = '\n'.join(contenido_suelto_actual).strip()
-            if contenido_agregar:
-                nuevo_contenido = partes[1].rstrip()
-                if nuevo_contenido:
-                    nuevo_contenido += '\n' + contenido_agregar
-                else:
-                    nuevo_contenido = contenido_agregar
-                # Actualizar la última fila
-                lineas_corregidas[ultima_fila_tabla_idx] = partes[0] + '|' + nuevo_contenido
+    # Procesar cualquier contenido suelto restante al final convirtiéndolo en filas de tabla
+    if contenido_suelto_actual:
+        for contenido_suelto in contenido_suelto_actual:
+            if contenido_suelto.strip():
+                fila_tabla = f"| | {contenido_suelto.strip()} |"
+                lineas_corregidas.append(fila_tabla)
     
     # Si no hay tabla detectada, retornar el contenido original
     if not dentro_tabla:
@@ -319,20 +308,11 @@ def validar_y_corregir_formato_tabla(contenido):
     for linea in lineas_corregidas:
         if '|' in linea or not linea.strip():
             resultado_final.append(linea)
-        # Si hay una línea sin | después de la tabla, agregarla a la última celda
-        elif resultado_final and dentro_tabla:
-            ultima_idx = len(resultado_final) - 1
-            if ultima_idx >= 0:
-                ultima_linea = resultado_final[ultima_idx]
-                if '|' in ultima_linea:
-                    partes = ultima_linea.rsplit('|', 1)
-                    if len(partes) == 2:
-                        nuevo_contenido = partes[1].rstrip()
-                        if nuevo_contenido:
-                            nuevo_contenido += '\n' + linea
-                        else:
-                            nuevo_contenido = linea
-                        resultado_final[ultima_idx] = partes[0] + '|' + nuevo_contenido
+        # Si hay una línea sin | después de la tabla, convertirla en fila de tabla con item vacío
+        elif resultado_final and dentro_tabla and linea.strip():
+            # Convertir contenido suelto en fila de tabla con item vacío a la izquierda
+            fila_tabla = f"| | {linea.strip()} |"
+            resultado_final.append(fila_tabla)
     
     resultado = '\n'.join(resultado_final)
     # Validar nuevamente el orden después de la corrección
@@ -567,22 +547,11 @@ def limpieza_final_tabla(contenido):
             # Solo incluir líneas que tengan | (son parte de la tabla)
             if '|' in linea_stripped:
                 lineas_finales.append(linea_stripped)
-            # Si no tiene | pero estamos dentro de la tabla, podría ser contenido suelto
-            # que debería estar dentro de la última celda - lo agregamos a la última línea
-            elif linea_stripped and lineas_finales:
-                # Agregar a la última línea de tabla
-                ultima_idx = len(lineas_finales) - 1
-                if ultima_idx >= 0:
-                    ultima_linea = lineas_finales[ultima_idx]
-                    if '|' in ultima_linea:
-                        partes = ultima_linea.rsplit('|', 1)
-                        if len(partes) == 2:
-                            nuevo_contenido = partes[1].rstrip()
-                            if nuevo_contenido:
-                                nuevo_contenido += '\n' + linea_stripped
-                            else:
-                                nuevo_contenido = linea_stripped
-                            lineas_finales[ultima_idx] = partes[0] + '|' + nuevo_contenido
+            # Si no tiene | pero estamos dentro de la tabla, convertir en fila de tabla con item vacío
+            elif linea_stripped:
+                # Convertir contenido suelto en fila de tabla con item vacío a la izquierda
+                fila_tabla = f"| | {linea_stripped} |"
+                lineas_finales.append(fila_tabla)
     
     resultado = '\n'.join(lineas_finales)
     # Validar nuevamente el orden después de la limpieza
