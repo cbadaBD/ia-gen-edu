@@ -163,8 +163,9 @@ def limpiar_contenido_html(contenido):
     for linea in lineas:
         # Si es una línea de tabla, limpiar HTML y viñetas pero preservar estructura
         if '|' in linea:
-            # Reemplazar <br> dentro de celdas con espacios
-            linea = re.sub(r'<br\s*/?>', ' ', linea, flags=re.IGNORECASE)
+            # Reemplazar <br> dentro de celdas con un marcador especial que luego se convertirá en salto de línea
+            # Usamos un marcador temporal que no aparecerá en el texto normal
+            linea = re.sub(r'<br\s*/?>', '\n', linea, flags=re.IGNORECASE)
             # Eliminar otras etiquetas HTML pero mantener el contenido
             linea = re.sub(r'<[^>]+>', '', linea)
             # Eliminar viñetas (•, -, *, →, etc.) al inicio de líneas dentro de celdas
@@ -172,18 +173,21 @@ def limpiar_contenido_html(contenido):
             # Patrón: viñeta al inicio después de | o después de salto de línea dentro de la celda
             partes = linea.split('|')
             if len(partes) >= 3:  # Tiene al menos item | contenido |
-                # Procesar solo el contenido (partes[1])
-                contenido_celda = partes[1]
-                # Eliminar viñetas al inicio de líneas dentro del contenido
-                contenido_celda = re.sub(r'^[\s]*[•\-\*→▪▫○●]\s*', '', contenido_celda, flags=re.MULTILINE)
-                # Eliminar viñetas en medio del texto (con espacio antes)
-                contenido_celda = re.sub(r'\s+[•\-\*→▪▫○●]\s+', ' ', contenido_celda)
-                contenido_celda = re.sub(r'\s+[•\-\*→▪▫○●]\s*', ' ', contenido_celda)
-                # Reconstruir la línea
-                partes[1] = contenido_celda
-                linea = '|'.join(partes)
-            # Limpiar espacios múltiples pero preservar la estructura de la tabla
-            linea = re.sub(r' +', ' ', linea)
+                # Procesar el contenido (partes[1] es ITEM, partes[2] es CONTENIDO)
+                if len(partes) > 2:
+                    contenido_celda = partes[2]
+                    # Eliminar viñetas al inicio de líneas dentro del contenido
+                    contenido_celda = re.sub(r'^[\s]*[•\-\*→▪▫○●]\s*', '', contenido_celda, flags=re.MULTILINE)
+                    # Eliminar viñetas en medio del texto (con espacio antes)
+                    contenido_celda = re.sub(r'\s+[•\-\*→▪▫○●]\s+', ' ', contenido_celda)
+                    contenido_celda = re.sub(r'\s+[•\-\*→▪▫○●]\s*', ' ', contenido_celda)
+                    # Reconstruir la línea
+                    partes[2] = contenido_celda
+                    linea = '|'.join(partes)
+            # Limpiar espacios múltiples pero preservar saltos de línea dentro de celdas
+            # No reemplazar espacios múltiples si hay saltos de línea, para preservar la estructura
+            if '\n' not in linea:
+                linea = re.sub(r' +', ' ', linea)
             lineas_procesadas.append(linea)
         else:
             # Para líneas que no son tabla, reemplazar <br> con saltos de línea
@@ -214,11 +218,44 @@ def limpiar_contenido_html(contenido):
     
     return '\n'.join(lineas_finales)
 
+def dividir_contenido_largo_en_filas(item, contenido):
+    """
+    Divide el contenido largo de una celda en múltiples filas.
+    Si el contenido tiene saltos de línea, cada línea adicional se convierte en una nueva fila
+    con un espacio en blanco en la columna ITEM para mantener la alineación.
+    
+    Args:
+        item: Texto del item (columna izquierda)
+        contenido: Texto del contenido (columna derecha), puede tener saltos de línea
+        
+    Returns:
+        Lista de filas de tabla en formato [item, contenido]
+    """
+    if not contenido:
+        return [[item, ""]]
+    
+    # Dividir el contenido por saltos de línea
+    lineas_contenido = contenido.split('\n')
+    filas = []
+    
+    # Primera fila: item + primera línea de contenido
+    if lineas_contenido:
+        filas.append([item, lineas_contenido[0].strip()])
+        
+        # Filas adicionales: espacio en blanco + líneas restantes de contenido
+        for linea_restante in lineas_contenido[1:]:
+            if linea_restante.strip():  # Solo agregar si la línea no está vacía
+                filas.append([" ", linea_restante.strip()])  # Espacio en blanco en ITEM
+    
+    return filas if filas else [[item, ""]]
+
+
 def validar_y_corregir_formato_tabla(contenido):
     """
     Valida y corrige el formato de la tabla para asegurar que todo el contenido esté dentro de las celdas.
     Mueve agresivamente todo el contenido suelto dentro de las celdas correspondientes.
     También valida que ITEM esté siempre a la izquierda y CONTENIDO a la derecha.
+    Si el contenido tiene saltos de línea, divide en múltiples filas con espacio en blanco en ITEM.
     
     Args:
         contenido: Texto que debería ser una tabla
@@ -259,9 +296,12 @@ def validar_y_corregir_formato_tabla(contenido):
             if '|' in linea:
                 # Primero procesar contenido suelto acumulado convirtiéndolo en filas de tabla
                 if contenido_suelto_actual:
-                    for contenido_suelto in contenido_suelto_actual:
-                        if contenido_suelto.strip():
-                            fila_tabla = f"| | {contenido_suelto.strip()} |"
+                    contenido_combinado = '\n'.join(contenido_suelto_actual)
+                    if contenido_combinado.strip():
+                        # Dividir contenido largo en múltiples filas
+                        filas = dividir_contenido_largo_en_filas(" ", contenido_combinado.strip())
+                        for fila_item, fila_contenido in filas:
+                            fila_tabla = f"| {fila_item} | {fila_contenido} |"
                             lineas_corregidas.append(fila_tabla)
                     contenido_suelto_actual = []
                 
@@ -269,22 +309,62 @@ def validar_y_corregir_formato_tabla(contenido):
                 # Contar las barras | para verificar estructura
                 num_barras = linea.count('|')
                 if num_barras >= 2:
-                    # Es una fila válida de tabla
-                    lineas_corregidas.append(linea)
-                    ultima_fila_tabla_idx = len(lineas_corregidas) - 1
+                    # Es una fila válida de tabla - extraer item y contenido
+                    partes = linea.split('|')
+                    if len(partes) >= 3:
+                        item = partes[1].strip()
+                        contenido_celda = partes[2].strip()
+                        # Si el contenido tiene saltos de línea (detectados por \n en la cadena original),
+                        # o si la línea no termina correctamente, puede ser contenido multi-línea
+                        # Dividir contenido largo en múltiples filas si tiene saltos de línea
+                        filas = dividir_contenido_largo_en_filas(item, contenido_celda)
+                        for fila_item, fila_contenido in filas:
+                            fila_tabla = f"| {fila_item} | {fila_contenido} |"
+                            lineas_corregidas.append(fila_tabla)
+                        ultima_fila_tabla_idx = len(lineas_corregidas) - 1
+                    else:
+                        # Formato incorrecto, mantener como está
+                        lineas_corregidas.append(linea)
+                        ultima_fila_tabla_idx = len(lineas_corregidas) - 1
                 else:
                     # No es una fila válida, convertir en fila de tabla con item vacío
                     if linea:
-                        fila_tabla = f"| | {linea} |"
-                        lineas_corregidas.append(fila_tabla)
+                        # Dividir contenido largo en múltiples filas
+                        filas = dividir_contenido_largo_en_filas(" ", linea)
+                        for fila_item, fila_contenido in filas:
+                            fila_tabla = f"| {fila_item} | {fila_contenido} |"
+                            lineas_corregidas.append(fila_tabla)
                         ultima_fila_tabla_idx = len(lineas_corregidas) - 1
             else:
-                # Línea sin |, es contenido suelto que debe convertirse en fila de tabla
+                # Línea sin |, puede ser continuación del contenido de la última celda
+                # o contenido suelto que debe convertirse en fila de tabla
                 if linea:  # Solo agregar si no está vacía
-                    # Convertir contenido suelto en fila de tabla con item vacío
-                    fila_tabla = f"| | {linea} |"
-                    lineas_corregidas.append(fila_tabla)
-                    ultima_fila_tabla_idx = len(lineas_corregidas) - 1
+                    # Verificar si la última fila tiene contenido que puede continuarse
+                    if (lineas_corregidas and 
+                        lineas_corregidas[-1].startswith('|') and
+                        ultima_fila_tabla_idx >= 0):
+                        # Intentar agregar a la última fila como continuación del contenido
+                        ultima_fila = lineas_corregidas[ultima_fila_tabla_idx]
+                        partes_ultima = ultima_fila.split('|')
+                        if len(partes_ultima) >= 3:
+                            # Agregar como nueva fila con espacio en blanco en ITEM
+                            fila_tabla = f"|  | {linea} |"
+                            lineas_corregidas.append(fila_tabla)
+                            ultima_fila_tabla_idx = len(lineas_corregidas) - 1
+                        else:
+                            # No se pudo parsear, crear nueva fila
+                            filas = dividir_contenido_largo_en_filas(" ", linea)
+                            for fila_item, fila_contenido in filas:
+                                fila_tabla = f"| {fila_item} | {fila_contenido} |"
+                                lineas_corregidas.append(fila_tabla)
+                            ultima_fila_tabla_idx = len(lineas_corregidas) - 1
+                    else:
+                        # No hay última fila válida, crear nueva fila
+                        filas = dividir_contenido_largo_en_filas(" ", linea)
+                        for fila_item, fila_contenido in filas:
+                            fila_tabla = f"| {fila_item} | {fila_contenido} |"
+                            lineas_corregidas.append(fila_tabla)
+                        ultima_fila_tabla_idx = len(lineas_corregidas) - 1
                     contenido_suelto_actual = []  # Ya se procesó
         else:
             # Contenido antes de la tabla, ignorar completamente
@@ -296,8 +376,11 @@ def validar_y_corregir_formato_tabla(contenido):
     if contenido_suelto_actual:
         for contenido_suelto in contenido_suelto_actual:
             if contenido_suelto.strip():
-                fila_tabla = f"| | {contenido_suelto.strip()} |"
-                lineas_corregidas.append(fila_tabla)
+                # Dividir contenido largo en múltiples filas
+                filas = dividir_contenido_largo_en_filas(" ", contenido_suelto.strip())
+                for fila_item, fila_contenido in filas:
+                    fila_tabla = f"| {fila_item} | {fila_contenido} |"
+                    lineas_corregidas.append(fila_tabla)
     
     # Si no hay tabla detectada, retornar el contenido original
     if not dentro_tabla:
@@ -310,9 +393,11 @@ def validar_y_corregir_formato_tabla(contenido):
             resultado_final.append(linea)
         # Si hay una línea sin | después de la tabla, convertirla en fila de tabla con item vacío
         elif resultado_final and dentro_tabla and linea.strip():
-            # Convertir contenido suelto en fila de tabla con item vacío a la izquierda
-            fila_tabla = f"| | {linea.strip()} |"
-            resultado_final.append(fila_tabla)
+            # Dividir contenido largo en múltiples filas
+            filas = dividir_contenido_largo_en_filas(" ", linea.strip())
+            for fila_item, fila_contenido in filas:
+                fila_tabla = f"| {fila_item} | {fila_contenido} |"
+                resultado_final.append(fila_tabla)
     
     resultado = '\n'.join(resultado_final)
     # Validar nuevamente el orden después de la corrección
@@ -517,6 +602,7 @@ def limpieza_final_tabla(contenido):
     """
     Hace una pasada final más agresiva para asegurar que TODO el contenido esté dentro de las celdas.
     Elimina cualquier línea que no sea parte de la tabla.
+    Si el contenido tiene saltos de línea, divide en múltiples filas con espacio en blanco en ITEM.
     
     Args:
         contenido: Texto que debería ser una tabla
@@ -546,12 +632,26 @@ def limpieza_final_tabla(contenido):
         if dentro_tabla:
             # Solo incluir líneas que tengan | (son parte de la tabla)
             if '|' in linea_stripped:
-                lineas_finales.append(linea_stripped)
+                # Extraer item y contenido para dividir si es necesario
+                partes = linea_stripped.split('|')
+                if len(partes) >= 3:
+                    item = partes[1].strip()
+                    contenido_celda = partes[2].strip()
+                    # Dividir contenido largo en múltiples filas si tiene saltos de línea
+                    filas = dividir_contenido_largo_en_filas(item, contenido_celda)
+                    for fila_item, fila_contenido in filas:
+                        fila_tabla = f"| {fila_item} | {fila_contenido} |"
+                        lineas_finales.append(fila_tabla)
+                else:
+                    # Mantener formato original si no se puede parsear
+                    lineas_finales.append(linea_stripped)
             # Si no tiene | pero estamos dentro de la tabla, convertir en fila de tabla con item vacío
             elif linea_stripped:
-                # Convertir contenido suelto en fila de tabla con item vacío a la izquierda
-                fila_tabla = f"| | {linea_stripped} |"
-                lineas_finales.append(fila_tabla)
+                # Dividir contenido largo en múltiples filas con espacio en blanco en ITEM
+                filas = dividir_contenido_largo_en_filas(" ", linea_stripped)
+                for fila_item, fila_contenido in filas:
+                    fila_tabla = f"| {fila_item} | {fila_contenido} |"
+                    lineas_finales.append(fila_tabla)
     
     resultado = '\n'.join(lineas_finales)
     # Validar nuevamente el orden después de la limpieza
