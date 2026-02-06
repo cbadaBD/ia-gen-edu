@@ -2,35 +2,32 @@
 
 ## ✅ Estado Actual del Proyecto
 
-### **¿Qué Genera el Proyecto?**
+### **¿Qué ofrece la aplicación?**
 
-El proyecto puede generar **3 tipos de contenido educativo**:
+La interfaz web (Streamlit) permite generar y mejorar **2 tipos de contenido educativo**:
 
-1. **📚 Programación Curricular Completa**
-   - Tabla con 6 columnas (Competencia, Capacidades, Contenidos, Desempeños, Criterios, Instrumentos)
-   - Competencias transversales
-   - Enfoques transversales
-   - Secuencia de 6 sesiones de aprendizaje
-   - Formato: TXT y DOCX (guardado automáticamente en Desktop)
+1. **📚 Unidad Didáctica**
+   - Por área curricular y grado (1° a 5° secundaria)
+   - Competencia opcional del Currículo Nacional como referencia
+   - Tabla con formato ITEM | CONTENIDO (competencia, capacidades, contenidos, desempeños, criterios, instrumentos, etc.)
+   - **Chat integrado:** mejora el documento con instrucciones en lenguaje natural (ej.: “haz más breve la sección de criterios”, “mejora la secuencia didáctica”)
+   - Exportación a TXT y DOCX
 
-2. **🖼️ Imágenes Educativas**
-   - Generación de imágenes usando Stable Diffusion XL
-   - Basadas en descripciones de prompts
-   - Visualización en la interfaz
+2. **📖 Sesión de Aprendizaje**
+   - Basada en una unidad didáctica ya generada (se elige título de unidad y título de sesión)
+   - Contenido alineado al currículo en formato de tabla
+   - **Chat integrado:** mismo flujo de mejora por instrucciones
+   - Exportación a TXT y DOCX
 
-3. **🗣️ Análisis de Comentarios**
-   - Análisis de comentarios de estudiantes/docentes
-   - Resumen con opiniones positivas y negativas
-   - Recomendaciones
-   - Formato: TXT y DOCX (guardado automáticamente en Desktop)
+El backend (`src/core`) incluye además lógica para **programación curricular completa**, **imágenes educativas** (Stable Diffusion XL) y **análisis de comentarios**; ver `DETALLES_TECNICOS.md` para uso por API o futuras pantallas.
 
 ---
 
 ## ⚠️ Requisito para Generar Contenido
 
-### **Necesitas Credenciales de AWS**
+### **Credenciales de AWS**
 
-El proyecto usa **Amazon Bedrock** para generar contenido, por lo que necesitas:
+El proyecto usa **Amazon Bedrock** (Claude, Stable Diffusion XL), por lo que necesitas:
 
 1. **Crear archivo `.env`** en la raíz del proyecto:
 
@@ -46,87 +43,77 @@ AWS_ACCESS_KEY_ID=tu_aws_access_key_id
 AWS_SECRET_ACCESS_KEY=tu_aws_secret_access_key
 ```
 
-3. **Verificar permisos AWS**:
-   - Bedrock habilitado en tu cuenta AWS
-   - Permisos IAM para usar Bedrock
+3. **Verificar permisos AWS**
+   - Bedrock habilitado en tu cuenta
+   - Permisos IAM para invocar modelos (p. ej. `bedrock:InvokeModel`)
 
 ---
 
 ## 🚀 Cómo Usar el Proyecto
 
-### **1. Configurar Credenciales**
+### **1. Configurar credenciales**
 
 ```bash
-# Copiar archivo de ejemplo
 cp env.example .env
-
-# Editar con tus credenciales
-nano .env  # o usa tu editor preferido
+nano .env   # o tu editor preferido
 ```
 
-### **2. Ejecutar la Aplicación**
+### **2. Ejecutar la aplicación**
 
 ```bash
-# Opción A: Usar run.py (recomendado)
+# Opción A: run.py (recomendado)
 python3 run.py
 
-# Opción B: Comando directo
+# Opción B: Streamlit directo
 streamlit run src/app/app.py
-
-# Opción C: Presionar F5 en el IDE (si está configurado)
 ```
 
-### **3. Usar la Interfaz Web**
+### **3. Usar la interfaz**
 
-1. Abre `http://localhost:8501` en tu navegador
-2. Selecciona el tab correspondiente:
-   - **Tab 1**: Programación Curricular
-   - **Tab 2**: Imágenes Educativas
-   - **Tab 3**: Análisis de Comentarios
-3. Llena el formulario y haz clic en "Generar"
-4. Los archivos se guardan automáticamente en `~/Desktop/content_edu_outputs/`
+1. Abre **http://localhost:8501** en el navegador.
+2. Elige el tab:
+   - **📚 Unidad Didáctica:** área, grado, competencia (opcional) → Generar → mejorar con el chat si quieres → descargar TXT/DOCX.
+   - **📖 Sesión de Aprendizaje:** título de unidad (de una generada antes), título de sesión → Generar → mejorar con el chat → descargar.
+3. Los archivos se pueden guardar en `~/Desktop/content_edu_outputs/` o en la ruta que configures al descargar.
 
 ---
 
-## 📁 Ubicación de Outputs
+## 📁 Ubicación de salidas
 
-Todos los archivos generados se guardan en:
+Los documentos generados se pueden exportar desde la propia interfaz. Si usas la ruta por defecto del proyecto, los archivos suelen guardarse en:
 
 ```
 ~/Desktop/content_edu_outputs/
 ```
 
-Ejemplos:
-- `programacion_curricular_3to_secundaria.txt`
-- `programacion_curricular_3to_secundaria.docx`
-- `analisis_comentarios_20260116.txt`
-- `analisis_comentarios_20260116.docx`
+Ejemplos de nombres:
+- `unidad_didactica_ciencia_tecnologia.docx`
+- `sesion_aprendizaje_3ro_secundaria.docx`
 
 ---
 
-## ✅ Verificación Rápida
-
-Para verificar que todo funciona:
+## ✅ Verificación rápida
 
 ```bash
-# 1. Verificar dependencias
+# 1. Dependencias
 pip install -r requirements.txt
 
-# 2. Verificar credenciales AWS
+# 2. Credenciales AWS
 python3 -c "import os; print('AWS_REGION:', os.getenv('AWS_REGION', 'NO CONFIGURADO'))"
 
-# 3. Ejecutar aplicación
+# 3. Ejecutar
 python3 run.py
 ```
 
 ---
 
-## 📝 Documentación Adicional
+## 📝 Documentación adicional
 
-- **`CONFIGURACION_AWS.md`**: Guía detallada de configuración AWS
-- **`COMO_EJECUTAR.md`**: Instrucciones de ejecución
-- **`README.md`**: Documentación general del proyecto
+- **`README.md`** – Visión general del proyecto
+- **`DETALLES_TECNICOS.md`** – Conexión AWS, esquema del proyecto, RAG, prompting, modelos
+- **`DOCKER.md`** – Ejecución con Docker
+- **`data/README.md`** – Estructura de los JSON usados por el RAG (currículo y orientaciones CNEB)
 
 ---
 
-**Última actualización**: 2026-01-16
+**Última actualización:** 2026-02-05

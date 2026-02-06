@@ -1,7 +1,36 @@
 """
 Módulo para gestionar las competencias del Currículo Nacional de Educación Básica del Perú.
-Contiene las 31 competencias oficiales del MINEDU.
+Contiene las 31 competencias oficiales del MINEDU y la malla curricular de Educación Secundaria.
 """
+
+# Áreas curriculares del Programa Curricular de Educación Secundaria – Perú (2016), sección 5
+AREAS_CURRICULARES_SECUNDARIA = [
+    "Desarrollo Personal, Ciudadanía y Cívica",
+    "Ciencias Sociales",
+    "Educación Física",
+    "Arte y Cultura",
+    "Comunicación",
+    "Castellano como Segunda Lengua",
+    "Inglés como Lengua Extranjera",
+    "Matemática",
+    "Ciencia y Tecnología",
+    "Educación para el Trabajo",
+    "Educación Religiosa",
+]
+
+# Grados (cursos) de Educación Secundaria según malla curricular – 1° a 5°
+GRADOS_SECUNDARIA = ["1°", "2°", "3°", "4°", "5°"]
+
+
+def obtener_areas_curriculares_secundaria():
+    """Devuelve la lista de áreas curriculares de secundaria para menús (malla curricular)."""
+    return list(AREAS_CURRICULARES_SECUNDARIA)
+
+
+def obtener_grados_secundaria():
+    """Devuelve la lista de grados/cursos de secundaria para menús (1° a 5°)."""
+    return list(GRADOS_SECUNDARIA)
+
 
 COMPETENCIAS_CURRICULARES = [
     {
@@ -232,31 +261,37 @@ def obtener_competencias_por_area(area_curricular):
         
         area_lower = area_curricular.lower()
         
-        # Mapeo de áreas curriculares a números de competencias
+        # Mapeo de áreas curriculares a números de competencias (malla secundaria)
         mapeo_areas = {
-            "ciencia y tecnología": [12, 13, 14],
-            "ciencia": [12, 13, 14],
-            "tecnología": [12, 13, 14],
-            "matemática": [8, 9, 10, 11],
-            "matematica": [8, 9, 10, 11],
-            "comunicación": [4, 5, 6, 7],
-            "comunicacion": [4, 5, 6, 7],
+            "desarrollo personal, ciudadanía y cívica": [1, 2, 22, 23, 24, 25, 26, 27, 28, 29],
+            "ciencias sociales": [19, 20, 21],
             "educación física": [3],
             "educacion fisica": [3],
             "arte y cultura": [17, 18],
             "arte": [17, 18],
             "cultura": [17, 18],
+            "comunicación": [4, 5, 6, 7],
+            "comunicacion": [4, 5, 6, 7],
+            "castellano como segunda lengua": [4, 5, 6],
+            "inglés como lengua extranjera": [7],
+            "ingles como lengua extranjera": [7],
+            "matemática": [8, 9, 10, 11],
+            "matematica": [8, 9, 10, 11],
+            "ciencia y tecnología": [12, 13, 14],
+            "ciencia": [12, 13, 14],
+            "tecnología": [12, 13, 14],
+            "tecnologia": [12, 13, 14],
+            "educación para el trabajo": [15, 16],
+            "educacion para el trabajo": [15, 16],
+            "educación religiosa": [30, 31],
+            "educacion religiosa": [30, 31],
+            "tutoría": [1, 2, 22, 23, 24, 25, 26, 27, 28, 29],
+            "tutoria": [1, 2, 22, 23, 24, 25, 26, 27, 28, 29],
             "historia": [19],
             "geografía": [20],
             "geografia": [20],
             "economía": [21],
             "economia": [21],
-            "educación religiosa": [30, 31],
-            "educacion religiosa": [30, 31],
-            "tutoría": [1, 2, 22, 23, 24, 25, 26, 27, 28, 29],
-            "tutoria": [1, 2, 22, 23, 24, 25, 26, 27, 28, 29],
-            "educación para el trabajo": [15, 16],
-            "educacion para el trabajo": [15, 16]
         }
         
         # Buscar en el mapeo

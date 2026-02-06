@@ -56,10 +56,11 @@ with st.spinner("🔄 Verificando dependencias..."):
     # Verificar servicios Bedrock
     try:
         from core.bedrock_services import (
-            generar_unidad_didactica, 
+            generar_unidad_didactica,
             generar_sesion_aprendizaje,
             extraer_titulo_unidad_didactica,
-            extraer_titulos_sesiones_unidad
+            extraer_titulos_sesiones_unidad,
+            mejorar_documento_con_instruccion,
         )
         SERVICES_OK = True
     except Exception as e:
@@ -72,17 +73,62 @@ with st.spinner("🔄 Verificando dependencias..."):
         from core.competencias_curriculares import (
             obtener_todas_las_competencias,
             obtener_competencias_por_area,
-            formatear_competencia_para_tabla
+            formatear_competencia_para_tabla,
+            obtener_areas_curriculares_secundaria,
+            obtener_grados_secundaria,
         )
         COMPETENCIAS_DISPONIBLES = True
     except Exception:
         # Si falla la importación, simplemente no mostrar el selector de competencias
         COMPETENCIAS_DISPONIBLES = False
 
+# Fallback para menús de malla curricular si no se puede importar competencias_curriculares
+AREAS_MALLA_FALLBACK = [
+    "Desarrollo Personal, Ciudadanía y Cívica", "Ciencias Sociales", "Educación Física",
+    "Arte y Cultura", "Comunicación", "Castellano como Segunda Lengua",
+    "Inglés como Lengua Extranjera", "Matemática", "Ciencia y Tecnología",
+    "Educación para el Trabajo", "Educación Religiosa",
+]
+GRADOS_MALLA_FALLBACK = ["1°", "2°", "3°", "4°", "5°"]
+
+def dividir_contenido_largo_en_filas(item, contenido):
+    """
+    Divide el contenido largo de una celda en múltiples filas.
+    Si el contenido tiene saltos de línea, cada línea adicional se convierte en una nueva fila
+    con una celda vacía en la columna ITEM para mantener la alineación.
+    
+    Args:
+        item: Texto del item (columna izquierda)
+        contenido: Texto del contenido (columna derecha), puede tener saltos de línea
+        
+    Returns:
+        Lista de filas de tabla en formato [item, contenido]
+    """
+    if not contenido:
+        return [[item, ""]]
+    
+    # Dividir el contenido por saltos de línea
+    lineas_contenido = contenido.split('\n')
+    filas = []
+    
+    # Primera fila: item + primera línea de contenido
+    if lineas_contenido:
+        filas.append([item, lineas_contenido[0].strip()])
+        
+        # Filas adicionales: celda vacía + líneas restantes de contenido
+        for linea_restante in lineas_contenido[1:]:
+            if linea_restante.strip():  # Solo agregar si la línea no está vacía
+                filas.append(["", linea_restante.strip()])  # Celda vacía en ITEM
+    
+    return filas if filas else [[item, ""]]
+
+
 def normalizar_tabla_para_streamlit(contenido):
     """
     Normaliza el contenido de tabla para asegurar que siempre tenga formato ITEM | CONTENIDO
     y se muestre correctamente en Streamlit.
+    Si encuentra contenido en la columna izquierda que no es un ITEM válido, lo mueve a la derecha.
+    Si el contenido tiene saltos de línea, divide en múltiples filas con espacio en blanco en ITEM.
     
     Args:
         contenido: Contenido con tablas en formato markdown
@@ -99,17 +145,94 @@ def normalizar_tabla_para_streamlit(contenido):
     
     def es_item_valido(texto):
         """Determina si un texto es un ITEM válido"""
-        if not texto or len(texto) > 100:
+        if not texto or len(texto.strip()) == 0:
             return False
-        texto_upper = texto.upper()
+        # Si está vacío, no es un item válido
+        if not texto or texto.strip() == "":
+            return False
+        # Si es muy largo, probablemente es contenido, no un item
+        if len(texto) > 100:
+            return False
+        
+        texto_upper = texto.upper().strip()
+        texto_original = texto.strip()
+        
+        # Excluir frases que son claramente contenido, no items
+        frases_contenido = [
+            'MATERIALES PARA ESTUDIANTES',
+            'MATERIALES PARA DOCENTE',
+            'MATERIAL PARA ESTUDIANTES',
+            'MATERIAL PARA DOCENTE',
+            'PARA ESTUDIANTES',
+            'PARA DOCENTE',
+            'VALORES:',
+            'ENFOQUES:',
+            'COMPETENCIA:',
+            'CAPACIDADES:',
+            'DESEMPEÑOS:',
+            'CRITERIOS:',
+            'EVIDENCIAS:',
+            'INSTRUMENTOS:',
+            'RECURSOS:',
+            'ACTIVIDADES:',
+            'DIFICULTADES:',
+            'MEJORAS:',
+            'AJUSTES:'
+        ]
+        
+        # Si contiene dos puntos y es una frase descriptiva, es contenido
+        if ':' in texto_original and len(texto_original.split(':')) > 1:
+            # Verificar si la parte antes de los dos puntos es una frase descriptiva
+            parte_antes = texto_original.split(':')[0].strip().upper()
+            if any(frase in parte_antes for frase in frases_contenido):
+                return False
+            # Si tiene más de 3 palabras antes de los dos puntos, probablemente es contenido
+            if len(parte_antes.split()) > 3:
+                return False
+        
+        # Si contiene "para" seguido de otra palabra, probablemente es contenido descriptivo
+        if ' PARA ' in texto_upper or texto_upper.startswith('PARA '):
+            return False
+        
         palabras_item = ['TÍTULO', 'SITUACIÓN', 'COMPETENCIA', 'CAPACIDAD', 
                         'EVIDENCIA', 'INSTRUMENTO', 'VALOR', 'SECUENCIA', 
                         'ENFOQUE', 'SESIÓN', 'MATERIAL', 'REFLEXIÓN', 'ESTÁNDAR',
-                        'DESEMPEÑO', 'PROPÓSITO', 'ORGANIZACIÓN', 'EVALUACIÓN']
+                        'DESEMPEÑO', 'PROPÓSITO', 'ORGANIZACIÓN', 'EVALUACIÓN',
+                        'DATOS', 'CRITERIO', 'MOMENTO', 'DIDÁCTICA', 'INFORMATIVOS',
+                        'SIGNIFICATIVA', 'PRECISADOS', 'APRENDIZAJE']
+        
+        # Limpiar formato markdown bold para análisis
+        texto_sin_bold = texto_original.replace('**', '').strip()
+        texto_sin_bold_upper = texto_sin_bold.upper()
+        
+        # Solo considerar como item si:
+        # 1. Es muy corto y está en mayúsculas (típico de encabezados)
+        # 2. Empieza con ** (formato markdown bold) - estos son siempre items
+        # 3. Es una palabra clave específica Y no es una frase descriptiva
+        es_palabra_clave = any(palabra in texto_sin_bold_upper for palabra in palabras_item)
+        
+        # Si empieza con **, es definitivamente un item (formato markdown bold)
+        if texto_original.strip().startswith('**') and texto_original.strip().endswith('**'):
+            # Verificar que no sea una frase de contenido excluida
+            texto_limpio = texto_sin_bold_upper
+            if not any(frase in texto_limpio for frase in ['MATERIALES PARA', 'PARA ESTUDIANTES', 'PARA DOCENTE']):
+                return True
+        
+        # Si es una palabra clave pero es una frase descriptiva, no es un item
+        if es_palabra_clave:
+            # Verificar si es solo la palabra clave o una frase
+            palabras_texto = texto_sin_bold_upper.split()
+            # Si tiene más de 2 palabras y contiene "PARA", es contenido
+            if len(palabras_texto) > 2 and 'PARA' in palabras_texto:
+                return False
+            # Si tiene más de 5 palabras en total y NO está en negrita, probablemente es contenido
+            if len(palabras_texto) > 5 and not texto_original.strip().startswith('**'):
+                return False
+        
         return (
-            (len(texto) < 50 and texto.isupper()) or
-            texto.startswith('**') or
-            any(palabra in texto_upper for palabra in palabras_item)
+            (len(texto_sin_bold) < 50 and texto_sin_bold.isupper() and len(texto_sin_bold.split()) <= 5) or
+            (texto_original.strip().startswith('**') and len(texto_sin_bold.split()) <= 6) or
+            (es_palabra_clave and len(texto_sin_bold.split()) <= 5 and not any(frase in texto_sin_bold_upper for frase in ['MATERIALES PARA', 'PARA ESTUDIANTES', 'PARA DOCENTE']))
         )
     
     def obtener_ultima_fila_info():
@@ -160,40 +283,75 @@ def normalizar_tabla_para_streamlit(contenido):
                     
                     # PRIMERO: Verificar si la última fila tiene ITEM sin CONTENIDO
                     item_ultimo, contenido_ultimo, ultima_linea = obtener_ultima_fila_info()
-                    if item_ultimo and (not contenido_ultimo or len(contenido_ultimo) < 30):
+                    if item_ultimo and item_ultimo != "" and (not contenido_ultimo or len(contenido_ultimo) < 30):
                         # La última fila tiene ITEM sin CONTENIDO, agregar este contenido ahí
                         if contenido_ultimo:
-                            lineas_normalizadas[-1] = f"| {item_ultimo} | {contenido_ultimo}\n{contenido_unico} |"
+                            contenido_combinado = contenido_ultimo + '\n' + contenido_unico
                         else:
-                            lineas_normalizadas[-1] = f"| {item_ultimo} | {contenido_unico} |"
+                            contenido_combinado = contenido_unico
+                        # Dividir contenido largo en múltiples filas
+                        filas = dividir_contenido_largo_en_filas(item_ultimo, contenido_combinado)
+                        # Reemplazar la última fila con la primera fila dividida
+                        if filas:
+                            lineas_normalizadas[-1] = f"| {filas[0][0]} | {filas[0][1]} |"
+                            # Agregar filas adicionales con espacio en blanco en ITEM
+                            for fila_item, fila_contenido in filas[1:]:
+                                lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
                     elif es_item:
                         # Es un ITEM nuevo
                         lineas_normalizadas.append(f"| {contenido_unico} | |")
                     else:
                         # Es CONTENIDO pero no hay ITEM previo sin CONTENIDO
-                        lineas_normalizadas.append(f"| | {contenido_unico} |")
+                        # Dividir contenido largo en múltiples filas con celda vacía en ITEM
+                        filas = dividir_contenido_largo_en_filas("", contenido_unico)
+                        for fila_item, fila_contenido in filas:
+                            lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
                 elif len(fila) >= 2:
-                    # Dos o más columnas: tomar ITEM y unir el resto como CONTENIDO
-                    item = fila[0]
-                    contenido = ' '.join([c for c in fila[1:] if c])
-                    lineas_normalizadas.append(f"| {item} | {contenido} |")
+                    # Dos o más columnas: verificar si la primera es realmente un ITEM
+                    primera_col = fila[0]
+                    resto_contenido = ' '.join([c for c in fila[1:] if c])
+                    
+                    # Limpiar formato markdown bold del item si está presente
+                    item_limpio = primera_col.strip()
+                    if item_limpio.startswith('**') and item_limpio.endswith('**'):
+                        item_limpio = item_limpio[2:-2].strip()
+                    
+                    # Verificar si es un item válido (usar el texto limpio para verificación)
+                    es_item = es_item_valido(primera_col)
+                    
+                    # Si la primera columna NO es un ITEM válido, mover todo a la derecha
+                    if not es_item:
+                        # La primera columna es contenido, mover todo a la derecha con celda vacía
+                        contenido_completo = primera_col
+                        if resto_contenido:
+                            contenido_completo = primera_col + ' ' + resto_contenido
+                        # Dividir contenido largo en múltiples filas
+                        filas = dividir_contenido_largo_en_filas("", contenido_completo)
+                        for fila_item, fila_contenido in filas:
+                            lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
+                    else:
+                        # La primera columna es un ITEM válido
+                        # Usar el item original (con ** si estaba) para mantener formato
+                        # Dividir contenido largo en múltiples filas si tiene saltos de línea
+                        filas = dividir_contenido_largo_en_filas(primera_col, resto_contenido)
+                        for fila_item, fila_contenido in filas:
+                            lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
         else:
             # Línea fuera de tabla (sin formato |)
             if dentro_tabla and linea_stripped:
                 # Si estamos dentro de una tabla y encontramos contenido sin |,
-                # SIEMPRE agregarlo a la última fila como CONTENIDO
+                # SIEMPRE agregarlo como nueva fila con espacio en blanco en ITEM
                 if (lineas_normalizadas and 
                     lineas_normalizadas[-1].startswith('|') and
                     not linea_stripped.startswith('#') and
                     not re.match(r'^\s*\|[\s\-\:]+\|\s*$', linea_stripped)):
                     item_ultimo, contenido_ultimo, ultima_linea = obtener_ultima_fila_info()
-                    if item_ultimo is not None:
-                        # Agregar a CONTENIDO de la última fila
-                        if contenido_ultimo:
-                            contenido_ultimo += '\n' + linea_stripped
-                        else:
-                            contenido_ultimo = linea_stripped
-                        lineas_normalizadas[-1] = f"| {item_ultimo} | {contenido_ultimo} |"
+                    if item_ultimo is not None and item_ultimo != "":
+                        # Agregar como nueva fila con celda vacía en ITEM
+                        # Dividir en múltiples filas si es necesario
+                        filas = dividir_contenido_largo_en_filas("", linea_stripped)
+                        for fila_item, fila_contenido in filas:
+                            lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
                     else:
                         dentro_tabla = False
                         lineas_normalizadas.append(linea)
@@ -205,7 +363,177 @@ def normalizar_tabla_para_streamlit(contenido):
         
         i += 1
     
-    return '\n'.join(lineas_normalizadas)
+    # Post-procesamiento: dividir contenido largo en las filas finales y corregir items mal ubicados
+    lineas_finales = []
+    for linea in lineas_normalizadas:
+        if '|' in linea and not re.match(r'^\s*\|[\s\-\:]+\|\s*$', linea.strip()):
+            # Es una fila de tabla, verificar si el contenido tiene saltos de línea
+            partes = linea.split('|')
+            if len(partes) >= 3:
+                item = partes[1].strip()
+                contenido_celda = partes[2].strip()
+                
+                # Limpiar formato markdown bold del item para análisis
+                item_limpio = item.replace('**', '').strip() if item else ""
+                item_upper = item_limpio.upper() if item_limpio else ""
+                
+                # Detectar frases que son claramente contenido, no items
+                frases_contenido_detectadas = [
+                    'MATERIALES PARA ESTUDIANTES',
+                    'MATERIALES PARA DOCENTE',
+                    'MATERIAL PARA ESTUDIANTES',
+                    'MATERIAL PARA DOCENTE',
+                    'PARA ESTUDIANTES',
+                    'PARA DOCENTE',
+                    'VALORES:',
+                    'ENFOQUES:',
+                    'COMPETENCIA:',
+                    'CAPACIDADES:',
+                    'DESEMPEÑOS:',
+                    'CRITERIOS:',
+                    'EVIDENCIAS:',
+                    'INSTRUMENTOS:',
+                    'RECURSOS:',
+                    'ACTIVIDADES:'
+                ]
+                
+                es_frase_contenido = any(frase in item_upper for frase in frases_contenido_detectadas)
+                
+                # Si el item contiene ":" y es una frase descriptiva, es contenido
+                if item_limpio and ':' in item_limpio:
+                    parte_antes = item_limpio.split(':')[0].strip().upper()
+                    if any(frase in parte_antes for frase in frases_contenido_detectadas):
+                        es_frase_contenido = True
+                    # Si tiene más de 3 palabras antes de los dos puntos, probablemente es contenido
+                    if len(parte_antes.split()) > 3:
+                        es_frase_contenido = True
+                
+                # Si el item está en negrita (**), es definitivamente un item válido
+                es_item_en_negrita = item and item.strip().startswith('**') and item.strip().endswith('**')
+                
+                # Si el item no es válido O es una frase de contenido (y NO está en negrita), mover todo a la derecha
+                if item and (not es_item_valido(item) or es_frase_contenido) and not es_item_en_negrita:
+                    # El item es en realidad contenido, mover todo a la derecha
+                    if contenido_celda:
+                        contenido_completo = item + ' ' + contenido_celda
+                    else:
+                        contenido_completo = item
+                    filas = dividir_contenido_largo_en_filas("", contenido_completo)
+                    for fila_item, fila_contenido in filas:
+                        lineas_finales.append(f"| {fila_item} | {fila_contenido} |")
+                # Si el item está en negrita, mantenerlo en la izquierda y el contenido en la derecha
+                elif es_item_en_negrita:
+                    # Asegurar que el contenido esté en la columna derecha
+                    # Si el contenido está vacío o es muy corto, puede que esté mezclado con el item
+                    if not contenido_celda or len(contenido_celda) < 10:
+                        # El contenido puede estar en la misma celda que el item, verificar
+                        item_limpio = item.replace('**', '').strip()
+                        # Si el item tiene contenido después de los **, separarlo
+                        if '**' in item and len(item.split('**')) > 2:
+                            partes_item = item.split('**')
+                            if len(partes_item) >= 3:
+                                item_final = '**' + partes_item[1] + '**'
+                                contenido_restante = ' '.join(partes_item[2:]).strip()
+                                if contenido_restante:
+                                    contenido_celda = contenido_restante + (' ' + contenido_celda if contenido_celda else '')
+                                    item = item_final
+                    
+                    # Dividir contenido largo en múltiples filas si es necesario
+                    if '\n' in contenido_celda or len(contenido_celda) > 200:
+                        filas = dividir_contenido_largo_en_filas(item, contenido_celda)
+                        for fila_item, fila_contenido in filas:
+                            lineas_finales.append(f"| {fila_item} | {fila_contenido} |")
+                    else:
+                        lineas_finales.append(f"| {item} | {contenido_celda} |")
+                # Si el contenido tiene saltos de línea, dividir en múltiples filas
+                elif '\n' in contenido_celda or (len(contenido_celda) > 200 and item):
+                    filas = dividir_contenido_largo_en_filas(item, contenido_celda)
+                    for fila_item, fila_contenido in filas:
+                        lineas_finales.append(f"| {fila_item} | {fila_contenido} |")
+                else:
+                    lineas_finales.append(linea)
+            else:
+                lineas_finales.append(linea)
+        else:
+            lineas_finales.append(linea)
+    
+    resultado = '\n'.join(lineas_finales)
+    
+    # Asegurar que las tablas tengan el formato correcto para Streamlit
+    # Streamlit requiere una línea separadora después del encabezado
+    lineas_resultado = resultado.split('\n')
+    lineas_formateadas = []
+    dentro_tabla = False
+    ultima_fila_era_encabezado = False
+    
+    i = 0
+    while i < len(lineas_resultado):
+        linea = lineas_resultado[i]
+        linea_stripped = linea.strip()
+        
+        # Detectar si es una línea de tabla
+        if '|' in linea_stripped and linea_stripped.count('|') >= 2:
+            # Verificar si es un separador
+            es_separador = re.match(r'^\s*\|[\s\-\:]+\|\s*$', linea_stripped)
+            
+            if es_separador:
+                # Ya hay un separador, mantenerlo pero asegurar formato correcto
+                num_cols = linea_stripped.count('|') - 1
+                separador = '|' + '|'.join(['---' for _ in range(num_cols)]) + '|'
+                lineas_formateadas.append(separador)
+                dentro_tabla = True
+                ultima_fila_era_encabezado = False
+            else:
+                # Es una fila de datos o encabezado
+                # Verificar si es encabezado (contiene ITEM y CONTENIDO)
+                es_encabezado = ('ITEM' in linea_stripped.upper() and 'CONTENIDO' in linea_stripped.upper())
+                
+                # Si la última fila era encabezado y no había separador, agregarlo ahora
+                if ultima_fila_era_encabezado:
+                    num_cols = lineas_formateadas[-1].count('|') - 1
+                    separador = '|' + '|'.join(['---' for _ in range(num_cols)]) + '|'
+                    lineas_formateadas.append(separador)
+                    ultima_fila_era_encabezado = False
+                
+                lineas_formateadas.append(linea_stripped)
+                dentro_tabla = True
+                
+                # Si es encabezado, marcar para agregar separador después
+                if es_encabezado:
+                    # Verificar si la siguiente línea es un separador
+                    if i + 1 < len(lineas_resultado):
+                        siguiente = lineas_resultado[i + 1].strip()
+                        es_sig_separador = re.match(r'^\s*\|[\s\-\:]+\|\s*$', siguiente)
+                        if not es_sig_separador:
+                            ultima_fila_era_encabezado = True
+                    else:
+                        # Es la última línea y es encabezado, agregar separador
+                        num_cols = linea_stripped.count('|') - 1
+                        separador = '|' + '|'.join(['---' for _ in range(num_cols)]) + '|'
+                        lineas_formateadas.append(separador)
+        else:
+            # Si salimos de una tabla y la última fila era encabezado, agregar separador
+            if dentro_tabla and ultima_fila_era_encabezado:
+                num_cols = lineas_formateadas[-1].count('|') - 1
+                separador = '|' + '|'.join(['---' for _ in range(num_cols)]) + '|'
+                lineas_formateadas.append(separador)
+                ultima_fila_era_encabezado = False
+            
+            dentro_tabla = False
+            if linea_stripped:
+                lineas_formateadas.append(linea)
+            elif lineas_formateadas and lineas_formateadas[-1].strip():
+                lineas_formateadas.append('')
+        
+        i += 1
+    
+    # Si terminamos dentro de una tabla y la última fila era encabezado, agregar separador
+    if dentro_tabla and ultima_fila_era_encabezado:
+        num_cols = lineas_formateadas[-1].count('|') - 1
+        separador = '|' + '|'.join(['---' for _ in range(num_cols)]) + '|'
+        lineas_formateadas.append(separador)
+    
+    return '\n'.join(lineas_formateadas)
 
 # Función para procesar y formatear el contenido de unidad didáctica
 def formatear_unidad_didactica(contenido_raw, area_curricular):
@@ -1066,6 +1394,10 @@ if SERVICES_OK:
     with tab1:
         st.header("📚 Generador de Unidad Didáctica")
         
+        # Inicializar chat desde el inicio
+        if 'chat_mensajes_unidad' not in st.session_state:
+            st.session_state['chat_mensajes_unidad'] = []
+        
         # Información contextual
         with st.expander("ℹ️ Información sobre la Unidad Didáctica"):
             st.markdown("""
@@ -1080,12 +1412,26 @@ if SERVICES_OK:
             """)
         
         with st.form("form_unidad", clear_on_submit=False):
-            area_curricular = st.text_input(
+            # Menús según malla curricular (Programa Curricular Educación Secundaria – Perú 2016)
+            # Opción en blanco por defecto; el resto son sugerencias
+            lista_areas = obtener_areas_curriculares_secundaria() if COMPETENCIAS_DISPONIBLES else AREAS_MALLA_FALLBACK
+            lista_grados = obtener_grados_secundaria() if COMPETENCIAS_DISPONIBLES else GRADOS_MALLA_FALLBACK
+            opciones_areas = ["— Seleccione un área curricular —"] + list(lista_areas)
+            opciones_grados = ["— Seleccione un grado —"] + list(lista_grados)
+
+            area_curricular = st.selectbox(
                 "📚 Área Curricular",
-                placeholder="Ej: Ciencia y Tecnología, Matemática, Comunicación, etc.",
-                help="Ingresa el área curricular para la unidad didáctica"
+                options=opciones_areas,
+                index=0,
+                help="Selecciona el área curricular según la malla de Educación Secundaria"
             )
-            
+            grado = st.selectbox(
+                "🎓 Grado / Curso",
+                options=opciones_grados,
+                index=0,
+                help="Selecciona el grado (curso) de secundaria: 1° a 5°"
+            )
+
             # Selector de competencias (opcional, solo si está disponible)
             competencia_seleccionada = ""
             if COMPETENCIAS_DISPONIBLES:
@@ -1116,20 +1462,17 @@ if SERVICES_OK:
                     # Si hay algún error, simplemente no mostrar el selector
                     competencia_seleccionada = ""
             
-            grado = st.text_input(
-                "🎓 Grado",
-                placeholder="Ej: 3, 4, 5",
-                help="Grado del nivel educativo (Secundaria)"
-            )
-            
             generar = st.form_submit_button("🎯 Generar Unidad Didáctica", use_container_width=True)
         
         # FUERA del formulario - manejar resultados
         if generar:
-            if not area_curricular.strip():
-                st.warning("⚠️ Por favor ingresa un área curricular")
-            elif not grado.strip():
-                st.warning("⚠️ Por favor ingresa el grado")
+            # Tratar la opción por defecto (placeholder) como no seleccionado
+            area_vacia = not area_curricular.strip() or area_curricular.startswith("— Seleccione")
+            grado_vacio = not grado.strip() or grado.startswith("— Seleccione")
+            if area_vacia:
+                st.warning("⚠️ Por favor selecciona un área curricular")
+            elif grado_vacio:
+                st.warning("⚠️ Por favor selecciona un grado")
             else:
                 with st.spinner('🔄 Generando unidad didáctica...'):
                     try:
@@ -1171,54 +1514,156 @@ if SERVICES_OK:
                             'contenido': resultado_raw,
                             'titulos_sesiones': titulos_sesiones
                         }
+                        # Guardar documento editable y reiniciar chat de mejoras
+                        st.session_state['documento_editable_unidad'] = contenido_formateado
+                        st.session_state['documento_raw_unidad'] = resultado_raw
+                        st.session_state['chat_mensajes_unidad'] = []
                         
-                        # Mensaje de éxito con ubicación
                         st.success("✅ ¡Unidad didáctica generada exitosamente!")
                         if ruta_txt:
                             st.info(f"📁 Archivos guardados en: {ruta_txt.rsplit('/', 1)[0]}")
-                        
-                        # Mostrar resultado formateado
-                        st.markdown("---")
-                        st.markdown(contenido_formateado)
-                        st.markdown("---")
-                        
-                        # Botones de descarga
-                        col1, col2, col3 = st.columns(3)
-                        
-                        with col1:
-                            st.download_button(
-                                "📄 Descargar TXT",
-                                data=contenido_formateado,
-                                file_name=f"unidad_didactica_{fecha_str}.txt",
-                                mime="text/plain",
-                                key="download_txt_unidad",
-                                use_container_width=True
-                            )
-                        
-                        with col2:
-                            if DOCX_OK and doc_bytes:
-                                st.download_button(
-                                    "📝 Descargar WORD",
-                                    data=doc_bytes,
-                                    file_name=f"unidad_didactica_{fecha_str}.docx",
-                                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                    key="download_docx_unidad",
-                                    use_container_width=True
-                                )
-                            else:
-                                st.button("📝 WORD no disponible", disabled=True, key="docx_disabled_unidad", use_container_width=True)
-                        
-                        with col3:
-                            # Botón para generar nueva unidad
-                            if st.button("🔄 Generar Nueva", key="nueva_unidad", use_container_width=True):
-                                st.rerun()
                                 
                     except Exception as e:
                         st.error(f"❌ Error generando unidad didáctica: {str(e)}")
                         st.info("💡 Verifica la conexión con AWS Bedrock")
+        
+        # Mostrar documento actual (generado o mejorado por chat) y chat de mejoras
+        if st.session_state.get('documento_editable_unidad'):
+            st.markdown("---")
+            
+            # Sección de documento con expander para mejor organización
+            with st.expander("📄 Ver documento actual", expanded=True):
+                doc_actual = st.session_state['documento_editable_unidad']
+                st.markdown(doc_actual)
+            
+            # Botones de acción en una fila organizada
+            st.markdown("### 📥 Descargar documento")
+            col1, col2, col3 = st.columns([2, 2, 2])
+            with col1:
+                st.download_button(
+                    "📄 Descargar TXT",
+                    data=doc_actual,
+                    file_name=f"unidad_didactica_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                    mime="text/plain",
+                    key="download_txt_unidad",
+                    use_container_width=True
+                )
+            with col2:
+                if DOCX_OK:
+                    doc_bytes_actual = crear_documento_profesional(
+                        st.session_state.get('documento_raw_unidad', doc_actual),
+                        "Unidad Didáctica",
+                        f"Área: {st.session_state.get('unidad_generada', {}).get('area_curricular', '')}"
+                    )
+                    if doc_bytes_actual:
+                        st.download_button(
+                            "📝 Descargar WORD",
+                            data=doc_bytes_actual,
+                            file_name=f"unidad_didactica_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            key="download_docx_unidad",
+                            use_container_width=True
+                        )
+                    else:
+                        st.button("📝 WORD no disponible", disabled=True, key="docx_disabled_unidad", use_container_width=True)
+                else:
+                    st.button("📝 WORD no disponible", disabled=True, key="docx_disabled_unidad", use_container_width=True)
+            with col3:
+                if st.button("🔄 Generar Nueva Unidad", key="nueva_unidad", use_container_width=True):
+                    for k in ('documento_editable_unidad', 'documento_raw_unidad', 'chat_mensajes_unidad'):
+                        if k in st.session_state:
+                            del st.session_state[k]
+                    st.rerun()
+            
+            st.markdown("---")
+        
+        # Chat siempre visible desde el inicio - Mejor organizado
+        st.markdown("### 💬 Editor de Chat - Mejorar documento")
+        
+        # Mostrar estado del documento
+        if st.session_state.get('documento_editable_unidad'):
+            st.success("✅ Tienes un documento generado. Puedes mejorarlo usando el chat.")
+        else:
+            st.info("ℹ️ **Genera primero una unidad didáctica arriba para poder mejorarla con el chat.**")
+        
+        st.info("💡 **Sugerencias:** Puedes pedir cambios como 'haz más breve la sección de criterios', 'mejora el lenguaje', 'añade más ejemplos', etc.")
+        
+        # Contenedor para el chat con mejor estilo
+        chat_container = st.container()
+        with chat_container:
+            # Mostrar historial de chat con mejor formato
+            if st.session_state['chat_mensajes_unidad']:
+                st.markdown("#### 📜 Historial de conversación")
+                for idx, msg in enumerate(st.session_state['chat_mensajes_unidad']):
+                    with st.chat_message(msg["role"]):
+                        if msg["role"] == "user":
+                            st.markdown(f"**Tu solicitud:**\n{msg['content']}")
+                        else:
+                            # Mejorar formato de respuesta del asistente
+                            contenido = msg['content']
+                            if "✅ Cambios aplicados" in contenido:
+                                st.success("✅ **Cambios aplicados exitosamente**")
+                                # Extraer solo la vista previa si existe
+                                if "Vista previa:" in contenido:
+                                    partes = contenido.split("Vista previa:", 1)
+                                    if len(partes) > 1:
+                                        st.markdown(f"**Vista previa:**\n{partes[1].strip()}")
+                            elif "❌ Error" in contenido:
+                                st.error(contenido)
+                            else:
+                                st.markdown(contenido)
+                    if idx < len(st.session_state['chat_mensajes_unidad']) - 1:
+                        st.markdown("---")
+            else:
+                st.markdown("*No hay mensajes aún. Escribe abajo para comenzar a mejorar el documento.*")
+            
+            # Input de chat con mejor placeholder (habilitado solo si hay documento)
+            tiene_documento = st.session_state.get('documento_editable_unidad')
+            prompt_chat = st.chat_input(
+                "Escribe aquí cómo quieres mejorar el documento..." if tiene_documento else "Primero genera una unidad didáctica arriba...",
+                key="chat_input_unidad",
+                disabled=not tiene_documento
+            )
+            
+            if prompt_chat and tiene_documento:
+                # Agregar mensaje del usuario al historial
+                st.session_state['chat_mensajes_unidad'].append({"role": "user", "content": prompt_chat})
+                
+                # Mostrar spinner mientras se procesa
+                with st.spinner("🔄 Aplicando cambios al documento..."):
+                    try:
+                        nuevo_doc = mejorar_documento_con_instruccion(
+                            st.session_state['documento_editable_unidad'],
+                            prompt_chat,
+                            "unidad didáctica"
+                        )
+                        
+                        if nuevo_doc and not nuevo_doc.startswith("[Error"):
+                            st.session_state['documento_editable_unidad'] = nuevo_doc
+                            st.session_state['documento_raw_unidad'] = nuevo_doc
+                            # Mensaje de éxito más claro
+                            st.session_state['chat_mensajes_unidad'].append({
+                                "role": "assistant",
+                                "content": f"✅ Cambios aplicados exitosamente. El documento ha sido actualizado.\n\n**Vista previa de los cambios:**\n\n{nuevo_doc[:400]}..."
+                            })
+                        else:
+                            st.session_state['chat_mensajes_unidad'].append({
+                                "role": "assistant",
+                                "content": f"⚠️ No se pudieron aplicar los cambios. Por favor, intenta con una instrucción más específica."
+                            })
+                    except Exception as e:
+                        st.session_state['chat_mensajes_unidad'].append({
+                            "role": "assistant",
+                            "content": f"❌ Error al procesar la solicitud: {str(e)}\n\nPor favor, intenta nuevamente."
+                        })
+                st.rerun()
     
     with tab2:
         st.header("📖 Generador de Sesión de Aprendizaje")
+        
+        # Inicializar chat desde el inicio
+        if 'chat_mensajes_sesion' not in st.session_state:
+            st.session_state['chat_mensajes_sesion'] = []
         
         # Información contextual
         with st.expander("ℹ️ Información sobre la Sesión de Aprendizaje"):
@@ -1388,50 +1833,160 @@ if SERVICES_OK:
                             doc_bytes = None
                             ruta_docx = None
                         
-                        # Mensaje de éxito con ubicación
+                        # Guardar documento editable y metadatos para chat y descarga
+                        st.session_state['documento_editable_sesion'] = contenido_formateado
+                        st.session_state['documento_raw_sesion'] = resultado_raw
+                        st.session_state['chat_mensajes_sesion'] = []
+                        st.session_state['sesion_meta'] = {
+                            'titulo_unidad': titulo_unidad,
+                            'titulo_sesion': titulo_sesion,
+                            'nivel': nivel,
+                            'grado': grado_actual,
+                            'seccion': seccion
+                        }
+                        
                         st.success("✅ ¡Sesión de aprendizaje generada exitosamente!")
                         if ruta_txt:
                             st.info(f"📁 Archivos guardados en: {ruta_txt.rsplit('/', 1)[0]}")
-                        
-                        # Mostrar resultado formateado
-                        st.markdown("---")
-                        st.markdown(contenido_formateado)
-                        st.markdown("---")
-                        
-                        # Botones de descarga
-                        col1, col2, col3 = st.columns(3)
-                        
-                        with col1:
-                            st.download_button(
-                                "📄 Descargar TXT",
-                                data=contenido_formateado,
-                                file_name=f"sesion_aprendizaje_{fecha_str}.txt",
-                                mime="text/plain",
-                                key="download_txt_sesion",
-                                use_container_width=True
-                            )
-                        
-                        with col2:
-                            if DOCX_OK and doc_bytes:
-                                st.download_button(
-                                    "📝 Descargar WORD",
-                                    data=doc_bytes,
-                                    file_name=f"sesion_aprendizaje_{fecha_str}.docx",
-                                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                    key="download_docx_sesion",
-                                    use_container_width=True
-                                )
-                            else:
-                                st.button("📝 WORD no disponible", disabled=True, key="docx_disabled_sesion", use_container_width=True)
-                        
-                        with col3:
-                            # Botón para generar nueva sesión
-                            if st.button("🔄 Generar Nueva", key="nueva_sesion", use_container_width=True):
-                                st.rerun()
                                 
                     except Exception as e:
                         st.error(f"❌ Error generando sesión de aprendizaje: {str(e)}")
                         st.info("💡 Verifica la conexión con AWS Bedrock")
+        
+        # Mostrar documento actual (generado o mejorado) y chat de mejoras - Sesión
+        if st.session_state.get('documento_editable_sesion'):
+            st.markdown("---")
+            
+            # Sección de documento con expander para mejor organización
+            with st.expander("📄 Ver documento actual", expanded=True):
+                doc_actual_sesion = st.session_state['documento_editable_sesion']
+                st.markdown(doc_actual_sesion)
+            
+            # Botones de acción en una fila organizada
+            st.markdown("### 📥 Descargar documento")
+            col1, col2, col3 = st.columns([2, 2, 2])
+            with col1:
+                st.download_button(
+                    "📄 Descargar TXT",
+                    data=doc_actual_sesion,
+                    file_name=f"sesion_aprendizaje_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                    mime="text/plain",
+                    key="download_txt_sesion",
+                    use_container_width=True
+                )
+            with col2:
+                if DOCX_OK:
+                    meta = st.session_state.get('sesion_meta', {})
+                    doc_bytes_sesion = crear_documento_sesion_aprendizaje(
+                        st.session_state.get('documento_raw_sesion', doc_actual_sesion),
+                        meta.get('titulo_unidad', ''),
+                        meta.get('titulo_sesion', ''),
+                        meta.get('nivel', 'Secundaria'),
+                        meta.get('grado', ''),
+                        meta.get('seccion', '')
+                    )
+                    if doc_bytes_sesion:
+                        st.download_button(
+                            "📝 Descargar WORD",
+                            data=doc_bytes_sesion,
+                            file_name=f"sesion_aprendizaje_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx",
+                            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                            key="download_docx_sesion",
+                            use_container_width=True
+                        )
+                    else:
+                        st.button("📝 WORD no disponible", disabled=True, key="docx_disabled_sesion", use_container_width=True)
+                else:
+                    st.button("📝 WORD no disponible", disabled=True, key="docx_disabled_sesion", use_container_width=True)
+            with col3:
+                if st.button("🔄 Generar Nueva Sesión", key="nueva_sesion", use_container_width=True):
+                    for k in ('documento_editable_sesion', 'documento_raw_sesion', 'chat_mensajes_sesion', 'sesion_meta'):
+                        if k in st.session_state:
+                            del st.session_state[k]
+                    st.rerun()
+            
+            st.markdown("---")
+        
+        # Chat siempre visible desde el inicio - Mejor organizado
+        st.markdown("### 💬 Editor de Chat - Mejorar sesión")
+        
+        # Mostrar estado del documento
+        if st.session_state.get('documento_editable_sesion'):
+            st.success("✅ Tienes una sesión generada. Puedes mejorarla usando el chat.")
+        else:
+            st.info("ℹ️ **Genera primero una sesión de aprendizaje arriba para poder mejorarla con el chat.**")
+        
+        st.info("💡 **Sugerencias:** Puedes pedir cambios como 'añade una actividad de cierre', 'simplifica las indicaciones', 'mejora la secuencia didáctica', etc.")
+        
+        # Contenedor para el chat con mejor estilo
+        chat_container_sesion = st.container()
+        with chat_container_sesion:
+            # Mostrar historial de chat con mejor formato
+            if st.session_state['chat_mensajes_sesion']:
+                st.markdown("#### 📜 Historial de conversación")
+                for idx, msg in enumerate(st.session_state['chat_mensajes_sesion']):
+                    with st.chat_message(msg["role"]):
+                        if msg["role"] == "user":
+                            st.markdown(f"**Tu solicitud:**\n{msg['content']}")
+                        else:
+                            # Mejorar formato de respuesta del asistente
+                            contenido = msg['content']
+                            if "✅ Cambios aplicados" in contenido:
+                                st.success("✅ **Cambios aplicados exitosamente**")
+                                # Extraer solo la vista previa si existe
+                                if "Vista previa:" in contenido:
+                                    partes = contenido.split("Vista previa:", 1)
+                                    if len(partes) > 1:
+                                        st.markdown(f"**Vista previa:**\n{partes[1].strip()}")
+                            elif "❌ Error" in contenido:
+                                st.error(contenido)
+                            else:
+                                st.markdown(contenido)
+                    if idx < len(st.session_state['chat_mensajes_sesion']) - 1:
+                        st.markdown("---")
+            else:
+                st.markdown("*No hay mensajes aún. Escribe abajo para comenzar a mejorar la sesión.*")
+            
+            # Input de chat con mejor placeholder (habilitado solo si hay documento)
+            tiene_documento_sesion = st.session_state.get('documento_editable_sesion')
+            prompt_sesion = st.chat_input(
+                "Escribe aquí cómo quieres mejorar la sesión..." if tiene_documento_sesion else "Primero genera una sesión de aprendizaje arriba...",
+                key="chat_input_sesion",
+                disabled=not tiene_documento_sesion
+            )
+            
+            if prompt_sesion and tiene_documento_sesion:
+                # Agregar mensaje del usuario al historial
+                st.session_state['chat_mensajes_sesion'].append({"role": "user", "content": prompt_sesion})
+                
+                # Mostrar spinner mientras se procesa
+                with st.spinner("🔄 Aplicando cambios a la sesión..."):
+                    try:
+                        nuevo_doc_sesion = mejorar_documento_con_instruccion(
+                            st.session_state['documento_editable_sesion'],
+                            prompt_sesion,
+                            "sesión de aprendizaje"
+                        )
+                        
+                        if nuevo_doc_sesion and not nuevo_doc_sesion.startswith("[Error"):
+                            st.session_state['documento_editable_sesion'] = nuevo_doc_sesion
+                            st.session_state['documento_raw_sesion'] = nuevo_doc_sesion
+                            # Mensaje de éxito más claro
+                            st.session_state['chat_mensajes_sesion'].append({
+                                "role": "assistant",
+                                "content": f"✅ Cambios aplicados exitosamente. La sesión ha sido actualizada.\n\n**Vista previa de los cambios:**\n\n{nuevo_doc_sesion[:400]}..."
+                            })
+                        else:
+                            st.session_state['chat_mensajes_sesion'].append({
+                                "role": "assistant",
+                                "content": f"⚠️ No se pudieron aplicar los cambios. Por favor, intenta con una instrucción más específica."
+                            })
+                    except Exception as e:
+                        st.session_state['chat_mensajes_sesion'].append({
+                            "role": "assistant",
+                            "content": f"❌ Error al procesar la solicitud: {str(e)}\n\nPor favor, intenta nuevamente."
+                        })
+                st.rerun()
 
 else:
     st.error("⚠️ Los servicios no están disponibles. Verifica la configuración.")

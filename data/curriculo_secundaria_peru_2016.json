@@ -1,0 +1,183 @@
+{
+  "metadata": {
+    "documento": "Programa Curricular de Educación Secundaria",
+    "pais": "Perú",
+    "anio": 2016,
+    "nivel_educativo": "Secundaria",
+    "ciclos": ["VI", "VII"],
+    "grados": ["1°", "2°", "3°", "4°", "5°"],
+    "resolucion": "RM N°649-2016-MINEDU",
+    "vigencia_desde": "01/01/2017",
+    "estructura": [
+      "Base legal",
+      "Perfil de egreso",
+      "Ciclos",
+      "Enfoques",
+      "Áreas",
+      "Competencias",
+      "Orientaciones"
+    ]
+  },
+  "keywords": [
+    "currículo nacional perú 2016",
+    "educación secundaria perú",
+    "competencias curriculares",
+    "enfoques transversales",
+    "áreas curriculares secundaria",
+    "ciclo VI secundaria",
+    "ciclo VII secundaria",
+    "estándares de aprendizaje",
+    "desempeños por grado",
+    "planificación curricular",
+    "evaluación formativa",
+    "tutoría educativa",
+    "RM 649-2016-MINEDU",
+    "perfil de egreso"
+  ],
+  "chunks": [
+    {
+      "id": "base_legal",
+      "section": "1. Base Legal y Marco Normativo",
+      "text": "Resolución Ministerial: N°649-2016-MINEDU. Fecha: 15 de diciembre de 2016. Currículo Nacional de la Educación Básica: Aprobado por RM N°281-2016-MINEDU. Vigencia: Implementación gradual desde el 01/01/2017. Ámbito: Instituciones educativas públicas y privadas. Documentos previos vigentes excepcionalmente: Diseño Curricular Nacional de la Educación Básica Regular (RM N°440-2008-ED modificada por RM N°199-2015-MINEDU); Diseño Curricular Básico Nacional de la Educación Básica Alternativa (RM N°0276-2009-ED).",
+      "keywords": ["RM 649-2016-MINEDU", "currículo nacional perú 2016", "vigencia"]
+    },
+    {
+      "id": "perfil_egreso",
+      "section": "2. Perfil de Egreso de la Educación Básica",
+      "text": "Definición: Visión común e integral de los aprendizajes que deben lograr los estudiantes al término de la Educación Básica. Propósito: Unificar criterios y establecer ruta hacia resultados comunes respetando la diversidad. Desarrollo: Progresivo a lo largo de la Educación Básica en diversas situaciones vinculadas a prácticas sociales.",
+      "keywords": ["perfil de egreso", "educación básica", "aprendizajes"]
+    },
+    {
+      "id": "nivel_secundaria",
+      "section": "3. Nivel de Educación Secundaria - Características Generales",
+      "text": "Duración: 5 años (tercer nivel de la Educación Básica Regular). Enfoque: Formación humanista, científica y tecnológica. Objetivos: Afianzar identidad personal y social; Desarrollar competencias para la vida, trabajo, convivencia democrática y ejercicio de la ciudadanía; Permitir acceso a niveles superiores de estudios; Continuidad del desarrollo de competencias desde Educación Inicial y Primaria.",
+      "keywords": ["educación secundaria perú", "nivel secundaria", "competencias"]
+    },
+    {
+      "id": "ciclo_vi",
+      "section": "3.2 Ciclos Educativos - Ciclo VI",
+      "text": "Ciclo VI: Grados 1° y 2° de secundaria. Características principales: Cambios corporales significativos (pubertad); Adaptación a nueva metodología y polidocencia; Construcción progresiva de pensamiento abstracto; Reconocimiento de sí mismo como persona; Interés por arte y actividades físicas.",
+      "keywords": ["ciclo VI secundaria", "1° secundaria", "2° secundaria"]
+    },
+    {
+      "id": "ciclo_vii",
+      "section": "3.2 Ciclos Educativos - Ciclo VII",
+      "text": "Ciclo VII: Grados 3°, 4° y 5° de secundaria. Características principales: Consolidación de identidad e imagen corporal; Pensamiento más abstracto; Formación de grupos heterogéneos; Reafirmación de personalidad; Desarrollo de pensamiento crítico y metacognición.",
+      "keywords": ["ciclo VII secundaria", "3° 4° 5° secundaria"]
+    },
+    {
+      "id": "enfoques_transversales",
+      "section": "4. Enfoques Transversales",
+      "text": "De Derechos: Basado en la dignidad de la persona, igualdad de derechos y no discriminación. Inclusivo o Atención a la Diversidad: Reconocimiento y valoración de las diferencias, atención a necesidades específicas. Intercultural: Diálogo e intercambio entre culturas en condiciones de igualdad. Igualdad de Género: Relaciones de igualdad entre hombres y mujeres, no discriminación. Ambiental: Relación armónica con el ambiente, desarrollo sostenible. Orientación al Bien Común: Búsqueda del beneficio colectivo sobre el individual. Búsqueda de la Excelencia: Esfuerzo constante por mejorar la calidad de los procesos y resultados.",
+      "keywords": ["enfoques transversales", "derechos", "inclusión", "intercultural", "género", "ambiental"]
+    },
+    {
+      "id": "area_desarrollo_personal",
+      "section": "5.1 Área Desarrollo Personal, Ciudadanía y Cívica",
+      "text": "Competencias: Construye su identidad; Convive y participa democráticamente en la búsqueda del bien común. Capacidades (Construye su identidad): Se valora a sí mismo; Autorregula sus emociones; Reflexiona y argumenta éticamente; Vive su sexualidad de manera integral y responsable. Capacidades (Convive y participa...): Interactúa con todas las personas; Construye normas y asume acuerdos y leyes; Maneja conflictos de manera constructiva; Delibera sobre asuntos públicos; Participa en acciones que promueven el bienestar común.",
+      "keywords": ["áreas curriculares secundaria", "desarrollo personal", "ciudadanía", "competencias curriculares"]
+    },
+    {
+      "id": "area_ciencias_sociales",
+      "section": "5.2 Ciencias Sociales",
+      "text": "Competencias: 1) Construye interpretaciones históricas. 2) Gestiona responsablemente el espacio y el ambiente. 3) Gestiona responsablemente los recursos económicos.",
+      "keywords": ["ciencias sociales", "competencias curriculares", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "area_educacion_fisica",
+      "section": "5.3 Educación Física",
+      "text": "Competencias: 1) Se desenvuelve de manera autónoma a través de su motricidad. 2) Interactúa a través de sus habilidades sociomotrices. 3) Asume una vida saludable.",
+      "keywords": ["educación física", "competencias curriculares", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "area_arte_cultura",
+      "section": "5.4 Arte y Cultura",
+      "text": "Competencias: 1) Aprecia de manera crítica manifestaciones artístico-culturales. 2) Crea proyectos desde los lenguajes artísticos.",
+      "keywords": ["arte y cultura", "competencias curriculares", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "area_comunicacion",
+      "section": "5.5 Comunicación",
+      "text": "Competencias: 1) Se comunica oralmente en su lengua materna. 2) Lee diversos tipos de textos escritos en lengua materna. 3) Escribe diversos tipos de textos en lengua materna.",
+      "keywords": ["comunicación", "competencias curriculares", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "area_castellano_l2",
+      "section": "5.6 Castellano como Segunda Lengua",
+      "text": "Competencias similares a Comunicación pero en castellano como L2.",
+      "keywords": ["castellano segunda lengua", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "area_ingles",
+      "section": "5.7 Inglés como Lengua Extranjera",
+      "text": "Competencias similares a Comunicación pero en inglés como LE.",
+      "keywords": ["inglés lengua extranjera", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "area_matematica",
+      "section": "5.8 Matemática",
+      "text": "Competencias: 1) Resuelve problemas de cantidad. 2) Resuelve problemas de regularidad, equivalencia y cambio. 3) Resuelve problemas de forma, movimiento y localización. 4) Resuelve problemas de gestión de datos e incertidumbre.",
+      "keywords": ["matemática", "competencias curriculares", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "area_ciencia_tecnologia",
+      "section": "5.9 Ciencia y Tecnología",
+      "text": "Competencias: 1) Indaga mediante métodos científicos para construir conocimientos. 2) Explica el mundo físico basándose en conocimientos sobre seres vivos, materia y energía, biodiversidad, Tierra y universo. 3) Diseña y construye soluciones tecnológicas para resolver problemas de su entorno.",
+      "keywords": ["ciencia y tecnología", "competencias curriculares", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "area_educacion_trabajo",
+      "section": "5.10 Educación para el Trabajo",
+      "text": "Competencia: 1) Gestiona proyectos de emprendimiento económico o social.",
+      "keywords": ["educación para el trabajo", "emprendimiento", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "area_educacion_religiosa",
+      "section": "5.11 Educación Religiosa",
+      "text": "Competencias: 1) Construye su identidad como persona humana, amada por Dios, digna, libre y trascendente. 2) Asume la experiencia del encuentro personal y comunitario con Dios en su proyecto de vida.",
+      "keywords": ["educación religiosa", "competencias curriculares", "áreas curriculares secundaria"]
+    },
+    {
+      "id": "competencias_transversales",
+      "section": "6. Competencias Transversales a las Áreas",
+      "text": "1) Se desenvuelve en los entornos virtuales generados por las TIC. 2) Gestiona su aprendizaje de manera autónoma.",
+      "keywords": ["competencias transversales", "TIC", "aprendizaje autónomo"]
+    },
+    {
+      "id": "planificacion",
+      "section": "7.1 Orientaciones Pedagógicas - Planificación",
+      "text": "Tipos de planificación: 1) Anual: Organización secuencial y cronológica de unidades didácticas. 2) Unidades didácticas: Organización de sesiones o actividades. Proceso de planificación: 1) Determinar propósito de aprendizaje. 2) Establecer criterios para recoger evidencias. 3) Diseñar y organizar situaciones, estrategias y condiciones.",
+      "keywords": ["planificación curricular", "unidades didácticas", "sesiones de aprendizaje"]
+    },
+    {
+      "id": "evaluacion_formativa",
+      "section": "7.2 Evaluación Formativa",
+      "text": "Definición: Proceso sistemático de recolección y valoración de información. Características: Continua, al servicio del aprendizaje, no solo certificativa. Instrumentos: Listas de cotejo, escalas de valoración, rúbricas, portafolios.",
+      "keywords": ["evaluación formativa", "rúbricas", "listas de cotejo", "portafolios"]
+    },
+    {
+      "id": "tutoria",
+      "section": "7.3 Tutoría y Orientación Educativa",
+      "text": "Modalidades: Tutoría grupal: 2 horas semanales, acompañamiento socioafectivo simultáneo. Tutoría individual: Atención personalizada, confidencial. Orientación a familias: Reuniones, entrevistas, escuela de familias. Dimensiones: Personal (conocimiento y aceptación de sí mismo); Social (relaciones con el entorno y ambiente); Aprendizajes (gestión de aprendizajes y procesos cognitivos).",
+      "keywords": ["tutoría educativa", "orientación educativa", "tutoría grupal", "tutoría individual"]
+    },
+    {
+      "id": "espacios_materiales",
+      "section": "7.4 Espacios y Materiales Educativos",
+      "text": "Espacios educativos: Seguros, inclusivos, iluminados, ventilados, limpios. Materiales educativos: No tóxicos, variados, organizados, de fácil manipulación. Rol del docente: Respetuoso, atento, flexible, acompañante permanente.",
+      "keywords": ["espacios educativos", "materiales educativos", "rol docente"]
+    },
+    {
+      "id": "estandares_desempenos",
+      "section": "8. Estructura de Evaluación y Desempeños",
+      "text": "Estándares de Aprendizaje: Ocho niveles de desarrollo de cada competencia a lo largo de la trayectoria escolar. Propósito: Definir niveles esperados al finalizar cada ciclo escolar. Desempeños por Grado: Descripciones específicas de lo que hacen los estudiantes respecto a los niveles de desarrollo de las competencias. Característica: En ocasiones iguales en dos grados sucesivos por requerir mayor tiempo para desarrollo complejo.",
+      "keywords": ["estándares de aprendizaje", "desempeños por grado", "evaluación"]
+    },
+    {
+      "id": "glosario_bibliografia",
+      "section": "9. Glosario y Bibliografía",
+      "text": "Definiciones clave que sustentan el Perfil de Egreso. Fuentes consultadas para la elaboración del currículo.",
+      "keywords": ["glosario", "bibliografía", "currículo nacional perú 2016"]
+    }
+  ]
+}

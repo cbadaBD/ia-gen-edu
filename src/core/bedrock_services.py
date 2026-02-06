@@ -753,7 +753,7 @@ IMPORTANTE: El formato debe ser EXACTAMENTE | ITEM | CONTENIDO | donde ITEM va a
 |------|-----------|
 | **COMPETENCIAS TRANSVERSALES** | [contenido completo dentro de esta celda] |
 | **ENFOQUES TRANSVERSALES** | [contenido completo dentro de esta celda] |
-| **SECUENCIA DE SESIONES DE APRENDIZAJE** | Sesión 1: [título completo]. Actividades: [descripción]. Sesión 2: [título completo]. Actividades: [descripción]. [continuar con todas las sesiones, todo dentro de esta celda] |
+| **SECUENCIA DE SESIONES DE APRENDIZAJE** | Sesión 1: [título completo siguiendo reglas: pregunta, frase nominal o verbo en 1ra persona plural]. Actividades: [descripción]. Sesión 2: [título completo siguiendo reglas]. Actividades: [descripción]. [continuar con todas las sesiones, todo dentro de esta celda] |
 
 CRÍTICO: NUNCA inviertas el orden. ITEM siempre a la izquierda, CONTENIDO siempre a la derecha.
 
@@ -994,6 +994,63 @@ Resumen:"""
     except Exception as e:
         return f"Error al generar el resumen: {e}"
 
+
+def mejorar_documento_con_instruccion(texto_documento: str, instruccion_usuario: str, tipo_documento: str = "documento") -> str:
+    """
+    Modifica o mejora un documento educativo según la instrucción del usuario.
+    Usa Claude en Bedrock para aplicar los cambios solicitados.
+
+    Args:
+        texto_documento: Contenido actual del documento (texto plano o markdown).
+        instruccion_usuario: Lo que el usuario pide (ej: "haz más breve la sección de criterios", "mejora el lenguaje").
+        tipo_documento: Etiqueta para el modelo (ej: "unidad didáctica", "sesión de aprendizaje").
+
+    Returns:
+        El documento modificado/mejorado como string, o mensaje de error.
+    """
+    try:
+        bedrock_runtime = crear_cliente_bedrock()
+        prompt = f"""Eres un editor experto en documentos educativos del MINEDU Perú.
+
+Tienes el siguiente {tipo_documento} (texto completo entre triple comillas):
+
+\"\"\"
+{texto_documento}
+\"\"\"
+
+INSTRUCCIONES DEL USUARIO:
+{instruccion_usuario}
+
+TAREA:
+1. Aplica exactamente lo que pide el usuario al documento.
+2. Conserva la estructura y formato del documento (tablas con | ITEM | CONTENIDO |, encabezados, etc.).
+3. No agregues explicaciones ni comentarios: devuelve ÚNICAMENTE el documento modificado, de principio a fin.
+4. Si el usuario pide "mejorar" sin detallar, mejora claridad, redacción y pertinencia pedagógica sin cambiar la estructura.
+
+Responde solo con el documento completo modificado, sin texto antes ni después."""
+
+        body = json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 8000,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.4,
+            "top_p": 0.9
+        })
+        response = bedrock_runtime.invoke_model(
+            body=body,
+            modelId='anthropic.claude-3-sonnet-20240229-v1:0',
+            accept='application/json',
+            contentType='application/json'
+        )
+        response_body = json.loads(response.get('body').read())
+        nuevo_texto = response_body.get('content', [{}])[0].get('text', '').strip()
+        if not nuevo_texto:
+            return texto_documento
+        return nuevo_texto
+    except Exception as e:
+        return f"[Error al mejorar el documento: {e}]. Documento original sin cambios."
+
+
 def generar_unidad_didactica(area_curricular, grado, competencia_referencia=None):
     """
     Genera una unidad didáctica completa para un área curricular específica
@@ -1040,8 +1097,9 @@ FORMATO EXACTO REQUERIDO - Copia este formato exactamente (sin agregar nada ante
 | **SITUACIÓN SIGNIFICATIVA** | Contexto real completo aquí. Todo el párrafo dentro de esta celda. |
 | **COMPETENCIAS TRANSVERSALES** | Se desenvuelve en entornos virtuales: Estándar: [texto completo del estándar]. Instrumento: [texto completo del instrumento]. Gestiona su aprendizaje de manera autónoma: Estándar: [texto completo del estándar]. Instrumento: [texto completo del instrumento]. TODO dentro de esta misma celda, usando saltos de línea para separar competencias. Solo texto plano, sin viñetas. |
 | **COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS** | Competencia: [texto]. Capacidades: [capacidad 1], [capacidad 2]. Desempeños: Desempeño 1: [descripción completa con características]. Desempeño 2: [descripción completa]. TODO dentro de esta misma celda. Solo texto plano, sin viñetas ni listas con guiones. |
-| **EVIDENCIAS DE APRENDIZAJE** | Evidencia 1: [descripción completa]
-Evidencia 2: [descripción completa]
+| **EVIDENCIAS DE APRENDIZAJE** | Evidencia 1: [Verbo + contenido + condición - debe demostrar logro de competencia]
+Evidencia 2: [Verbo + contenido + condición - debe demostrar logro de competencia]
+Ejemplos: "Explica las propiedades de la materia utilizando ejemplos concretos del entorno", "Clasifica materiales según sus propiedades físicas mediante observación directa"
 Todo dentro de esta celda. |
 | **INSTRUMENTOS DE EVALUACIÓN** | Rúbrica: [contenido completo de la rúbrica con todos los niveles]
 Lista de cotejo: [contenido completo]
@@ -1049,8 +1107,9 @@ Todo dentro de esta celda. |
 | **VALORES Y ENFOQUES TRANSVERSALES** | Valores: [lista completa]
 Enfoques: [lista completa]
 Todo dentro de esta celda. |
-| **SECUENCIA DE SESIONES** | Sesión 1: [título, actividades, desempeños, tiempo, recursos]
-Sesión 2: [título, actividades, desempeños, tiempo, recursos]
+| **SECUENCIA DE SESIONES** | Sesión 1: [título siguiendo las reglas: pregunta, frase nominal o verbo en 1ra persona plural], actividades: [descripción], desempeños: [lista], tiempo: [duración], recursos: [materiales]
+Sesión 2: [título siguiendo las reglas], actividades: [descripción], desempeños: [lista], tiempo: [duración], recursos: [materiales]
+Ejemplos de títulos válidos: "¿Cómo identificamos...?", "Identificación de...", "Identificamos..."
 Todo dentro de esta celda. |
 
 REGLAS ESTRICTAS DE FORMATO:
@@ -1073,8 +1132,45 @@ INSTRUCCIONES DE CONTENIDO:
 - Lenguaje claro y profesional
 - Para COMPETENCIAS TRANSVERSALES: Incluir estándares completos e instrumentos detallados para cada competencia, todo dentro de la misma celda
 - Para DESEMPEÑOS: Entre 8-12 desempeños específicos, precisos y observables
+- Para EVIDENCIAS DE APRENDIZAJE: Estructura obligatoria: VERBO + CONTENIDO + CONDICIÓN. Cada evidencia debe demostrar claramente que se ha logrado la competencia. Ejemplos: "Explica las propiedades de la materia utilizando ejemplos concretos del entorno", "Clasifica materiales según sus propiedades físicas mediante observación directa", "Argumenta sobre los cambios de estado usando evidencia experimental". El verbo debe ser observable y medible, el contenido debe referirse al aprendizaje específico, y la condición debe indicar cómo o en qué contexto se demuestra.
 - Para INSTRUMENTOS: Rúbricas completas con niveles de logro (Inicio, Proceso, Logrado, Destacado)
 - Para SECUENCIA DE SESIONES: 4-6 sesiones con título, actividades, desempeños, tiempo y recursos
+
+REGLAS CRÍTICAS PARA LOS TÍTULOS DE LAS SESIONES:
+El título de cada sesión debe comunicar la actividad principal en función de los propósitos de aprendizaje planteados. 
+Puede redactarse de las siguientes formas (elige la más apropiada para cada sesión):
+1. En forma de pregunta: "¿Cómo identificamos las propiedades de la materia?"
+2. En frase nominal: "Identificación de las propiedades de la materia"
+3. Iniciando con verbo en primera persona del plural: "Identificamos las propiedades de la materia"
+
+Ejemplos de títulos bien redactados:
+- "¿Qué características tiene la materia?"
+- "Exploración de los estados de la materia"
+- "Analizamos los cambios de estado de la materia"
+- "¿Cómo se relacionan los estados físicos con la temperatura?"
+- "Clasificación de materiales según sus propiedades"
+- "Clasificamos materiales según sus propiedades"
+
+Cada título debe ser claro, específico y reflejar directamente el propósito de aprendizaje de esa sesión.
+
+REGLAS CRÍTICAS PARA LAS EVIDENCIAS DE APRENDIZAJE:
+Cada evidencia debe seguir la estructura: VERBO + CONTENIDO + CONDICIÓN
+Lo importante es que se demuestre que se ha logrado la competencia.
+
+Estructura obligatoria:
+- VERBO: Acción observable y medible (explica, clasifica, argumenta, identifica, compara, etc.)
+- CONTENIDO: El aprendizaje específico relacionado con la competencia
+- CONDICIÓN: Cómo o en qué contexto se demuestra el aprendizaje (mediante, utilizando, a través de, etc.)
+
+Ejemplos de evidencias bien estructuradas:
+- "Explica las propiedades de la materia utilizando ejemplos concretos del entorno"
+- "Clasifica materiales según sus propiedades físicas mediante observación directa"
+- "Argumenta sobre los cambios de estado usando evidencia experimental"
+- "Identifica los estados de la materia a través de experimentos prácticos"
+- "Compara diferentes materiales según sus propiedades mediante tablas comparativas"
+- "Diseña experimentos para demostrar cambios de estado utilizando materiales del laboratorio"
+
+Cada evidencia debe demostrar claramente el logro de la competencia planteada en la unidad didáctica.
 
 EJEMPLO DE FORMATO CORRECTO PARA COMPETENCIAS TRANSVERSALES (dentro de la celda, solo texto plano):
 Se desenvuelve en entornos virtuales: Estándar: Utiliza responsablemente las tecnologías de la información y comunicación para interactuar en entornos virtuales. Instrumento: Lista de cotejo sobre el uso responsable de herramientas digitales.
@@ -1191,10 +1287,7 @@ FORMATO EXACTO REQUERIDO - Copia este formato exactamente (sin agregar nada ante
 | **CRITERIOS DE EVALUACIÓN** | Criterio 1: [descripción completa]. Criterio 2: [descripción completa]. Todo dentro de esta celda. Solo texto plano. |
 | **EVIDENCIA DE APRENDIZAJE** | Descripción completa de la evidencia aquí. Todo dentro de esta celda. Solo texto plano. |
 | **INSTRUMENTO DE EVALUACIÓN** | Rúbrica completa: [contenido completo con todos los niveles y descriptores]. O Lista de cotejo: [contenido completo con todos los indicadores]. Todo dentro de esta celda. Solo texto plano. |
-| **SECUENCIA DIDÁCTICA** | A. MOMENTO DE INICIO (aproximadamente 20% del tiempo): Actividad 1: [descripción detallada]. Actividad 2: [descripción detallada]. Tiempo: [tiempo específico]. B. MOMENTO DE DESARROLLO (aproximadamente 60% del tiempo): Actividad 1: [descripción detallada]. Actividad 2: [descripción detallada]. Tiempo: [tiempo específico]. C. MOMENTO DE CIERRE (aproximadamente 20% del tiempo): Actividad 1: [descripción detallada]. Actividad 2: [descripción detallada]
-- Tiempo: [tiempo específico]
-
-TODO dentro de esta misma celda. |
+| **SECUENCIA DIDÁCTICA** | A. MOMENTO DE INICIO (aprox. 20% del tiempo): Inicio con saludo cordial entre estudiantes y docente, recordando los acuerdos de convivencia. Motivación: [actividad que motive según el tema]. Saberes previos: pregunta ¿Qué es …? o similar. Problematización (conflicto cognitivo): pregunta ¿Las…? o pregunta que genere conflicto cognitivo. Propósito y organización: presentar título de la sesión y propósito; compartir criterios de evaluación; presentar el Reto: ¿Cómo [desafío que guíe la sesión]? Reflexionar según respuestas. Los estudiantes se agrupan y [actividad de exploración o trabajo en equipo]. Tiempo: [tiempo]. B. MOMENTO DE DESARROLLO (aprox. 60%): Actividades para construir aprendizaje, resolver el reto y recoger evidencias. Tiempo: [tiempo]. C. MOMENTO DE CIERRE (aprox. 20%): Reflexión sobre lo aprendido, metacognición y conexión con el propósito. Tiempo: [tiempo]. TODO dentro de esta misma celda. |
 | **MATERIALES Y RECURSOS** | Materiales para docente: [lista completa]
 Materiales para estudiantes: [lista completa]
 Recursos: [lista completa]
@@ -1228,8 +1321,13 @@ INSTRUCCIONES DE CONTENIDO:
 - Promover el aprendizaje activo y participativo
 - Incluir estrategias de atención a la diversidad
 
-EJEMPLO DE FORMATO CORRECTO PARA SECUENCIA DIDÁCTICA (dentro de la celda, solo texto plano):
-A. MOMENTO DE INICIO (aproximadamente 20% del tiempo): Actividad 1: [descripción detallada]. Actividad 2: [descripción detallada]. Tiempo: [tiempo específico]. B. MOMENTO DE DESARROLLO (aproximadamente 60% del tiempo): Actividad 1: [descripción detallada]. Actividad 2: [descripción detallada]. Tiempo: [tiempo específico]. C. MOMENTO DE CIERRE (aproximadamente 20% del tiempo): Actividad 1: [descripción detallada]. Actividad 2: [descripción detallada]. Tiempo: [tiempo específico].
+ESTRUCTURA OBLIGATORIA PARA SECUENCIA DIDÁCTICA (Estrategias / Actividades / Procesos didácticos):
+A. MOMENTO DE INICIO: 1) Saludo cordial y acuerdos de convivencia. 2) Motivación (actividad según tema). 3) Saberes previos (pregunta ej. ¿Qué es …?). 4) Problematización / conflicto cognitivo (pregunta ej. ¿Las…?). 5) Propósito y organización: título de la sesión, propósito, criterios de evaluación. 6) Presentar el Reto (ej. ¿Cómo …?). 7) Reflexión según respuestas. 8) Los estudiantes se agrupan y [actividad de exploración o trabajo en equipo].
+B. MOMENTO DE DESARROLLO: Actividades para construir el aprendizaje, resolver el reto y recoger evidencias.
+C. MOMENTO DE CIERRE: Reflexión sobre lo aprendido, metacognición y conexión con el propósito.
+
+EJEMPLO DE FORMATO (dentro de la celda, solo texto plano):
+A. MOMENTO DE INICIO (aprox. 20%): Saludo y acuerdos de convivencia. Motivación: [descripción]. Saberes previos: ¿Qué es …? Problematización: ¿Las…? Propósito y reto: ¿Cómo …? Reflexión. Agrupación y [actividad]. Tiempo: [X min]. B. MOMENTO DE DESARROLLO (aprox. 60%): [actividades detalladas]. Tiempo: [X min]. C. MOMENTO DE CIERRE (aprox. 20%): [reflexión y metacognición]. Tiempo: [X min].
 
 Recuerda: TODO debe estar dentro de la estructura de tabla, nada fuera. NO uses viñetas, solo texto plano.
 """

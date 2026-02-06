@@ -2,71 +2,169 @@
 import boto3
 import json
 import logging
-from typing import List, Dict, Optional
+import os
+from pathlib import Path
+from typing import List, Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
 
+# Rutas a JSON para RAG local
+def _base_data_paths() -> List[Path]:
+    base = Path(__file__).resolve().parent.parent.parent
+    base_alt = base.parent
+    return [base, base_alt]
+
+_CURRICULO_JSON = "data/curriculo_secundaria_peru_2016.json"
+_ORIENTACIONES_JSON = "data/orientaciones_pedagogicas_cneb.json"
+
+
+def _cargar_json_local(nombre: str) -> Optional[Dict[str, Any]]:
+    """Carga un JSON desde data/ (curriculo u orientaciones)."""
+    for base in _base_data_paths():
+        path = base / nombre
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.warning(f"No se pudo cargar {nombre} desde {path}: {e}")
+    return None
+
+
+def _cargar_curriculo_local() -> Optional[Dict[str, Any]]:
+    """Carga el Programa Curricular Educación Secundaria Perú 2016 desde JSON local."""
+    return _cargar_json_local(_CURRICULO_JSON)
+
+
+def _cargar_orientaciones_local() -> Optional[Dict[str, Any]]:
+    """Carga Orientaciones para planificación, mediación y evaluación (CNEB) desde JSON local."""
+    return _cargar_json_local(_ORIENTACIONES_JSON)
+
+
+def _buscar_contexto_local(
+    query: str,
+    grado: int,
+    area: str,
+    curriculo: Dict[str, Any],
+    top_k: int = 10,
+) -> List[Dict[str, Any]]:
+    """
+    Búsqueda local por palabras clave y texto.
+    Usa keywords del documento y coincidencias en el texto de cada chunk.
+    """
+    chunks = curriculo.get("chunks", [])
+    keywords_globales = set(k.lower() for k in curriculo.get("keywords", []))
+    query_lower = query.lower()
+    # Tokens de la consulta para scoring
+    query_tokens = set(query_lower.split())
+    # Añadir términos del área y grado
+    query_tokens.add(area.replace("_", " "))
+    query_tokens.add(f"{grado}")
+
+    scored: List[tuple] = []
+    for ch in chunks:
+        text = (ch.get("text") or "").lower()
+        section = (ch.get("section") or "").lower()
+        chunk_keywords = [k.lower() for k in ch.get("keywords", [])]
+        score = 0.0
+        # Coincidencia con keywords del chunk
+        for kw in chunk_keywords:
+            if kw in query_lower or any(t in kw for t in query_tokens):
+                score += 0.5
+        # Coincidencia de tokens en texto
+        for t in query_tokens:
+            if len(t) > 2 and t in text:
+                score += 0.3
+            if len(t) > 2 and t in section:
+                score += 0.4
+        # Keywords globales del currículo que coincidan con la consulta
+        for kw in keywords_globales:
+            if kw in query_lower and (kw in text or kw in section):
+                score += 0.4
+        if score > 0:
+            scored.append((score, ch))
+
+    scored.sort(key=lambda x: -x[0])
+    documentos = []
+    meta = curriculo.get("metadata", {})
+    fuente_nombre = meta.get("documento", "Currículo Secundaria Perú 2016")
+    for s, ch in scored[:top_k]:
+        documentos.append({
+            "contenido": f"[{ch.get('section', '')}]\n{ch.get('text', '')}",
+            "fuente": f"{fuente_nombre} - {ch.get('section', '')}",
+            "score": min(1.0, s),
+            "metadata": {"section": ch.get("section"), **meta},
+        })
+    return documentos
+
+
 class RAGEducativoService:
     """
-    Servicio RAG especializado para contenido educativo peruano
-    Integra Amazon Bedrock Knowledge Bases con documentos del MINEDU
+    Servicio RAG especializado para contenido educativo peruano.
+    Usa Amazon Bedrock Knowledge Bases si está configurado; si no, fallback
+    al Programa Curricular Educación Secundaria Perú 2016 (data/curriculo_secundaria_peru_2016.json).
     """
-    
+    KB_PLACEHOLDER = "KB-CURRICULO-ID-HERE"
+
     def __init__(self):
         self.bedrock_runtime = boto3.client('bedrock-runtime')
         self.bedrock_agent = boto3.client('bedrock-agent-runtime')
-        
-        # IDs de tu Knowledge Base (configurar después de crear)
         self.knowledge_base_ids = {
-            'curriculo_nacional': 'KB-CURRICULO-ID-HERE',
-            'rubricas_evaluacion': 'KB-RUBRICAS-ID-HERE', 
+            'curriculo_nacional': os.environ.get('BEDROCK_KB_CURRICULO_ID', 'KB-CURRICULO-ID-HERE'),
+            'rubricas_evaluacion': 'KB-RUBRICAS-ID-HERE',
             'metodologias': 'KB-METODOLOGIAS-ID-HERE',
             'recursos_educativos': 'KB-RECURSOS-ID-HERE'
         }
-    
+        self._curriculo_local: Optional[Dict[str, Any]] = _cargar_curriculo_local()
+        self._orientaciones_local: Optional[Dict[str, Any]] = _cargar_orientaciones_local()
+
     def buscar_contexto_curricular(self, query: str, grado: int, area: str = "ciencia_tecnologia") -> Dict:
         """
-        Busca contexto relevante en la base de conocimiento curricular
+        Busca contexto relevante en la base de conocimiento curricular.
+        Primero intenta Bedrock KB; si no está configurado o falla, usa el curriculo local (JSON).
         """
-        try:
-            # Consulta enriquecida con contexto educativo
-            query_enriquecida = f"""
-            Buscar información sobre: {query}
-            Contexto: Educación secundaria {grado}º grado, área de {area.replace('_', ' ')}
-            País: Perú, Currículo Nacional de Educación Básica
-            """
-            
-            response = self.bedrock_agent.retrieve(
-                knowledgeBaseId=self.knowledge_base_ids['curriculo_nacional'],
-                retrievalQuery={
-                    'text': query_enriquecida
-                },
-                retrievalConfiguration={
-                    'vectorSearchConfiguration': {
-                        'numberOfResults': 10,
-                        'overrideSearchType': 'HYBRID'  # Combina búsqueda semántica y por palabras clave
+        kb_id = self.knowledge_base_ids.get('curriculo_nacional') or self.KB_PLACEHOLDER
+        if kb_id != self.KB_PLACEHOLDER:
+            try:
+                query_enriquecida = f"""
+                Buscar información sobre: {query}
+                Contexto: Educación secundaria {grado}º grado, área de {area.replace('_', ' ')}
+                País: Perú, Currículo Nacional de Educación Básica
+                """
+                response = self.bedrock_agent.retrieve(
+                    knowledgeBaseId=kb_id,
+                    retrievalQuery={'text': query_enriquecida},
+                    retrievalConfiguration={
+                        'vectorSearchConfiguration': {
+                            'numberOfResults': 10,
+                            'overrideSearchType': 'HYBRID'
+                        }
                     }
-                }
-            )
-            
-            # Procesar resultados
-            documentos_relevantes = []
-            for result in response.get('retrievalResults', []):
-                documentos_relevantes.append({
-                    'contenido': result.get('content', {}).get('text', ''),
-                    'fuente': result.get('location', {}).get('s3Location', {}).get('uri', ''),
-                    'score': result.get('score', 0),
-                    'metadata': result.get('metadata', {})
-                })
-            
-            return {
-                'documentos': documentos_relevantes,
-                'total_encontrados': len(documentos_relevantes)
-            }
-            
-        except Exception as e:
-            logger.error(f"Error en búsqueda RAG: {e}")
-            return {'documentos': [], 'total_encontrados': 0}
+                )
+                documentos_relevantes = []
+                for result in response.get('retrievalResults', []):
+                    documentos_relevantes.append({
+                        'contenido': result.get('content', {}).get('text', ''),
+                        'fuente': result.get('location', {}).get('s3Location', {}).get('uri', ''),
+                        'score': result.get('score', 0),
+                        'metadata': result.get('metadata', {})
+                    })
+                return {'documentos': documentos_relevantes, 'total_encontrados': len(documentos_relevantes)}
+            except Exception as e:
+                logger.warning(f"Bedrock KB no disponible, usando curriculo local: {e}")
+
+        # Fallback: búsqueda local en curriculo + orientaciones pedagógicas CNEB
+        todos_docs: List[Dict[str, Any]] = []
+        if self._curriculo_local:
+            todos_docs.extend(_buscar_contexto_local(query, grado, area, self._curriculo_local, top_k=8))
+        if self._orientaciones_local:
+            # Orientaciones (planificación, mediación, evaluación) sin filtrar por grado/área
+            todos_docs.extend(_buscar_contexto_local(query, grado, area, self._orientaciones_local, top_k=6))
+        if todos_docs:
+            todos_docs.sort(key=lambda d: d.get("score", 0), reverse=True)
+            documentos_finales = todos_docs[:10]
+            return {'documentos': documentos_finales, 'total_encontrados': len(documentos_finales)}
+        return {'documentos': [], 'total_encontrados': 0}
     
     def generar_con_contexto_rag(self, prompt: str, contexto_documentos: List[Dict]) -> str:
         """

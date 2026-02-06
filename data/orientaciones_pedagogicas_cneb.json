@@ -1,0 +1,186 @@
+{
+  "metadata": {
+    "documento": "Orientaciones para planificación, mediación y evaluación - CNEB",
+    "pais": "Perú",
+    "referencia": "Currículo Nacional de la Educación Básica (CNEB)",
+    "destinatarios": "Docentes de secundaria",
+    "enfoque": "Competencias y evaluación formativa"
+  },
+  "keywords": [
+    "planificación curricular",
+    "evaluación formativa",
+    "competencia",
+    "CNEB",
+    "currículo nacional",
+    "mediación",
+    "retroalimentación",
+    "tarea auténtica",
+    "zona de desarrollo próximo",
+    "evidencias de aprendizaje",
+    "rúbricas",
+    "unidad didáctica",
+    "sesión de aprendizaje",
+    "contextualización",
+    "diversificación curricular",
+    "Marco del Buen Desempeño Docente",
+    "MBDD",
+    "Programa Curricular Secundaria",
+    "adolescente",
+    "planificación anual",
+    "procesos didácticos",
+    "secuencia didáctica",
+    "motivación",
+    "saberes previos",
+    "problematización",
+    "reto",
+    "acuerdos de convivencia"
+  ],
+  "chunks": [
+    {
+      "id": "objetivo_principal",
+      "section": "1. Objetivo principal",
+      "text": "Orientar a docentes de secundaria en planificar, mediar y evaluar aprendizajes bajo el Currículo Nacional de la Educación Básica (CNEB) con enfoque por competencias y evaluación formativa.",
+      "keywords": [
+        "objetivo",
+        "CNEB",
+        "planificar",
+        "mediar",
+        "evaluar",
+        "competencias",
+        "evaluación formativa"
+      ]
+    },
+    {
+      "id": "conceptos_clave",
+      "section": "2. Conceptos clave",
+      "text": "Competencia: capacidad de combinar saberes (ser, conocer, hacer) para resolver problemas en situaciones reales. Evaluación formativa: proceso continuo para retroalimentar y mejorar aprendizajes. Zona de desarrollo próximo (Vigotsky): distancia entre lo que el estudiante puede hacer solo y con ayuda. Tarea auténtica: actividad que simula problemas reales y moviliza competencias. Retroalimentación descriptiva: información clara y oportuna sobre logros y mejoras, centrada en el aprendizaje.",
+      "keywords": [
+        "competencia",
+        "evaluación formativa",
+        "zona de desarrollo próximo",
+        "Vigotsky",
+        "tarea auténtica",
+        "retroalimentación descriptiva"
+      ]
+    },
+    {
+      "id": "procesos_interconectados",
+      "section": "3. Procesos interconectados",
+      "text": "Planificación: Flexible, contextualizada, con situaciones significativas y evidencias anticipadas. Mediación: Interacción docente-estudiante para promover aprendizajes; docente como facilitador. Evaluación: Permanente, centrada en competencias, usa rúbricas, portafolios, listas de cotejo.",
+      "keywords": [
+        "planificación",
+        "mediación",
+        "evaluación",
+        "situaciones significativas",
+        "rúbricas",
+        "portafolios",
+        "listas de cotejo"
+      ]
+    },
+    {
+      "id": "pasos_planificar",
+      "section": "4. Pasos para planificar (flujo)",
+      "text": "1) Identificar necesidades y potencialidades de los estudiantes. 2) Definir propósitos de aprendizaje (competencias, capacidades, desempeños). 3) Determinar evidencias de logro (qué mostrará el estudiante). 4) Diseñar experiencias de aprendizaje (tareas auténticas). 5) Desarrollar las experiencias con mediación docente. 6) Recoger evidencias durante el proceso. 7) Analizar evidencias con rúbricas. 8) Retroalimentar para mejorar aprendizajes y práctica docente.",
+      "keywords": [
+        "planificación",
+        "propósitos de aprendizaje",
+        "competencias",
+        "capacidades",
+        "desempeños",
+        "evidencias de logro",
+        "tareas auténticas",
+        "rúbricas",
+        "retroalimentación"
+      ]
+    },
+    {
+      "id": "tipos_planificacion",
+      "section": "5. Tipos de planificación",
+      "text": "Planificación anual: Organiza unidades didácticas según estándares del ciclo. Unidad didáctica: Desarrolla competencias mediante situaciones significativas. Sesión de aprendizaje: Secuencia detallada de actividades en una clase.",
+      "keywords": [
+        "planificación anual",
+        "unidad didáctica",
+        "sesión de aprendizaje",
+        "estándares",
+        "situaciones significativas"
+      ]
+    },
+    {
+      "id": "herramientas_ejemplos",
+      "section": "6. Herramientas y ejemplos",
+      "text": "Rúbricas: analíticas (por criterios) y holísticas (visión global). Evidencias: informes, exposiciones, proyectos, debates, prototipos. Ejemplo de tarea auténtica: Analizar planes de gobierno de candidatos municipales y argumentar cuál responde mejor a necesidades locales. Matriz de contextualización: vincula factores del contexto con propósitos de aprendizaje.",
+      "keywords": [
+        "rúbricas",
+        "analíticas",
+        "holísticas",
+        "evidencias",
+        "tarea auténtica",
+        "matriz de contextualización"
+      ]
+    },
+    {
+      "id": "retroalimentacion_efectiva",
+      "section": "7. Retroalimentación efectiva",
+      "text": "Oportuna, clara, centrada en el aprendizaje (no en la persona). Preguntas clave: ¿Hacia dónde voy? ¿Cómo lo estoy haciendo? ¿Qué sigue? Evitar comentarios personales (ej. eres brillante) y centrarse en el proceso. Promover autoevaluación y metacognición.",
+      "keywords": [
+        "retroalimentación",
+        "autoevaluación",
+        "metacognición",
+        "evaluación formativa"
+      ]
+    },
+    {
+      "id": "contextualizacion_diversificacion",
+      "section": "8. Contextualización y diversificación curricular",
+      "text": "Diversificación: adaptar el CNEB a realidades locales (social, cultural, lingüística). Contextualización: tomar decisiones en la IE para hacer los aprendizajes pertinentes. Trabajo colegiado entre docentes y directivos.",
+      "keywords": [
+        "contextualización",
+        "diversificación curricular",
+        "CNEB",
+        "trabajo colegiado"
+      ]
+    },
+    {
+      "id": "enfoque_adolescente",
+      "section": "9. Enfoque en el adolescente",
+      "text": "Conocer sus características, intereses y contexto. Reconocer la adolescencia como etapa de grandes potencialidades (cognitivas, sociales, emocionales). Partir de sus saberes previos y necesidades reales.",
+      "keywords": [
+        "adolescente",
+        "secundaria",
+        "saberes previos",
+        "potencialidades"
+      ]
+    },
+    {
+      "id": "documentos_referencia",
+      "section": "10. Documentos de referencia clave",
+      "text": "Currículo Nacional de la Educación Básica (CNEB). Marco del Buen Desempeño Docente (MBDD). Programa Curricular de Educación Secundaria.",
+      "keywords": [
+        "CNEB",
+        "MBDD",
+        "Marco del Buen Desempeño Docente",
+        "Programa Curricular Secundaria"
+      ]
+    },
+    {
+      "id": "procesos_didacticos",
+      "section": "11. Estrategias / Actividades / Procesos didácticos",
+      "text": "Estructura recomendada para la secuencia didáctica. INICIO: Se inicia con el saludo cordial entre estudiantes y docente, recordando los acuerdos de convivencia. Motivación: Se pide a los estudiantes que [actividad motivadora según el tema]. Saberes previos: Se plantea la pregunta ¿Qué es …? o similar según el contenido. Problematización (conflicto cognitivo): Se realiza la siguiente pregunta ¿Las…? o pregunta que genere conflicto cognitivo. Propósito y organización: Se presenta el título de la sesión y el propósito de aprendizaje. Se comparten los criterios de evaluación. Se presenta el Reto: ¿Cómo [pregunta o desafío que guíe la sesión]? Se reflexiona según las respuestas de los estudiantes. Los estudiantes se agrupan y [actividad de trabajo en equipo o exploración]. DESARROLLO: Actividades para construir el aprendizaje, resolver el reto y recoger evidencias. CIERRE: Reflexión sobre lo aprendido, metacognición y conexión con el propósito.",
+      "keywords": [
+        "secuencia didáctica",
+        "procesos didácticos",
+        "inicio",
+        "motivación",
+        "saberes previos",
+        "problematización",
+        "conflicto cognitivo",
+        "propósito",
+        "criterios de evaluación",
+        "reto",
+        "convivencia",
+        "estrategias",
+        "actividades"
+      ]
+    }
+  ]
+}
