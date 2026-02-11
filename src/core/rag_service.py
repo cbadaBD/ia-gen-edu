@@ -16,6 +16,9 @@ def _base_data_paths() -> List[Path]:
 
 _CURRICULO_JSON = "data/curriculo_secundaria_peru_2016.json"
 _ORIENTACIONES_JSON = "data/orientaciones_pedagogicas_cneb.json"
+_SESION_EF_EPT_JSON = "data/sesion_ef_ept_planificacion_curricular.json"
+_SESION_3_EVAL_JSON = "data/sesion_3_evaluacion_formativa_ef_ept.json"
+_ENFOQUE_MODULO1_JSON = "data/enfoque_por_competencias_modulo1.json"
 
 
 def _cargar_json_local(nombre: str) -> Optional[Dict[str, Any]]:
@@ -39,6 +42,21 @@ def _cargar_curriculo_local() -> Optional[Dict[str, Any]]:
 def _cargar_orientaciones_local() -> Optional[Dict[str, Any]]:
     """Carga Orientaciones para planificación, mediación y evaluación (CNEB) desde JSON local."""
     return _cargar_json_local(_ORIENTACIONES_JSON)
+
+
+def _cargar_sesion_ef_ept_local() -> Optional[Dict[str, Any]]:
+    """Carga Sesión 2 EF/EPT - Planificación Curricular (enfoque por competencias y carisma salesiano) desde JSON local."""
+    return _cargar_json_local(_SESION_EF_EPT_JSON)
+
+
+def _cargar_sesion_3_eval_local() -> Optional[Dict[str, Any]]:
+    """Carga Sesión 3 EF/EPT - La Evaluación Formativa (enfoque por competencias y sentido salesiano) desde JSON local."""
+    return _cargar_json_local(_SESION_3_EVAL_JSON)
+
+
+def _cargar_enfoque_modulo1_local() -> Optional[Dict[str, Any]]:
+    """Carga Enfoque por competencias - Módulo 1 (capacitación, planificación y evaluación formativa) desde JSON local."""
+    return _cargar_json_local(_ENFOQUE_MODULO1_JSON)
 
 
 def _buscar_contexto_local(
@@ -117,6 +135,9 @@ class RAGEducativoService:
         }
         self._curriculo_local: Optional[Dict[str, Any]] = _cargar_curriculo_local()
         self._orientaciones_local: Optional[Dict[str, Any]] = _cargar_orientaciones_local()
+        self._sesion_ef_ept_local: Optional[Dict[str, Any]] = _cargar_sesion_ef_ept_local()
+        self._sesion_3_eval_local: Optional[Dict[str, Any]] = _cargar_sesion_3_eval_local()
+        self._enfoque_modulo1_local: Optional[Dict[str, Any]] = _cargar_enfoque_modulo1_local()
 
     def buscar_contexto_curricular(self, query: str, grado: int, area: str = "ciencia_tecnologia") -> Dict:
         """
@@ -153,13 +174,18 @@ class RAGEducativoService:
             except Exception as e:
                 logger.warning(f"Bedrock KB no disponible, usando curriculo local: {e}")
 
-        # Fallback: búsqueda local en curriculo + orientaciones pedagógicas CNEB
+        # Fallback: búsqueda local en curriculo + orientaciones CNEB + sesión EF/EPT (planificación curricular, carisma salesiano)
         todos_docs: List[Dict[str, Any]] = []
         if self._curriculo_local:
             todos_docs.extend(_buscar_contexto_local(query, grado, area, self._curriculo_local, top_k=8))
         if self._orientaciones_local:
-            # Orientaciones (planificación, mediación, evaluación) sin filtrar por grado/área
             todos_docs.extend(_buscar_contexto_local(query, grado, area, self._orientaciones_local, top_k=6))
+        if self._sesion_ef_ept_local:
+            todos_docs.extend(_buscar_contexto_local(query, grado, area, self._sesion_ef_ept_local, top_k=5))
+        if self._sesion_3_eval_local:
+            todos_docs.extend(_buscar_contexto_local(query, grado, area, self._sesion_3_eval_local, top_k=5))
+        if self._enfoque_modulo1_local:
+            todos_docs.extend(_buscar_contexto_local(query, grado, area, self._enfoque_modulo1_local, top_k=5))
         if todos_docs:
             todos_docs.sort(key=lambda d: d.get("score", 0), reverse=True)
             documentos_finales = todos_docs[:10]

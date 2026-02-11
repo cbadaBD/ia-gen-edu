@@ -1,0 +1,181 @@
+{
+  "metadata": {
+    "documento": "Enfoque por competencias - Módulo 1",
+    "origen": "Enfoque por competencias.pdf",
+    "curso": "CAPACITACIÓN – Planificación Curricular por Competencias y Metodologías Activas",
+    "módulo": "1 – Enfoque basado en Competencias, Planificación Curricular y Evaluación Formativa",
+    "propósito_general": "Formar docentes en el enfoque por competencias, su articulación con el carisma salesiano y su aplicación en planificación y evaluación formativa",
+    "nivel": "Formación docente",
+    "enfoque": "Enfoque por competencias, carisma salesiano, planificación curricular, evaluación formativa"
+  },
+  "keywords": [
+    "enfoque por competencias",
+    "carisma salesiano",
+    "planificación curricular",
+    "evaluación formativa",
+    "módulo 1",
+    "capacitación docente",
+    "metodologías activas",
+    "desempeños esperados",
+    "saber ser",
+    "saber hacer",
+    "saber conocer",
+    "saber convivir",
+    "PEPS",
+    "sistema preventivo",
+    "Don Bosco",
+    "buenos cristianos honrados ciudadanos",
+    "Perrenoud",
+    "Nussbaum",
+    "libertades sustanciales",
+    "capacidades cognitivas",
+    "capacidades socioemocionales",
+    "constructivismo",
+    "socioconstructivismo",
+    "Vygotsky",
+    "aprendizaje situado",
+    "razón religión amor",
+    "conocer el patio",
+    "acoger para educar",
+    "unir escuela vida fe",
+    "situaciones significativas",
+    "secuencia didáctica",
+    "inicio desarrollo cierre",
+    "evidencias de aprendizaje",
+    "retroalimentación formativa",
+    "lista de cotejo",
+    "rúbrica",
+    "escala de valoración",
+    "portafolio",
+    "MINEDU 2017",
+    "portafolio docente"
+  ],
+  "chunks": [
+    {
+      "id": "modulo_competencia_producto",
+      "section": "Competencia y producto final del módulo 1",
+      "text": "Competencia del módulo: Analiza los fundamentos del enfoque por competencias y diseña planificaciones y evaluaciones coherentes con los desempeños esperados. Producto final del módulo: Planificación y evaluación formativa basada en competencias. Contenidos del módulo: El enfoque basado en competencias; La planificación curricular desde el enfoque por competencias; La evaluación formativa.",
+      "keywords": ["competencia módulo", "producto final", "planificación", "evaluación formativa", "desempeños esperados", "contenidos módulo"]
+    },
+    {
+      "id": "seccion1_proposito",
+      "section": "Sección 1 - Propósito sesión 1",
+      "text": "Propósito de la sesión 1: Reconocer los principios, fundamentos pedagógicos y características del enfoque por competencias, comprendiendo su aplicación en el aula y representándolo mediante un mapa conceptual aplicado al área o nivel.",
+      "keywords": ["sesión 1", "propósito", "enfoque por competencias", "mapa conceptual", "fundamentos pedagógicos"]
+    },
+    {
+      "id": "que_es_enfoque_competencias",
+      "section": "¿Qué es el enfoque por competencias?",
+      "text": "El enfoque por competencias surge como respuesta a cambios sociales, culturales y tecnológicos acelerados. La escuela ya no solo transmite información, sino que forma personas capaces de: Comprender la realidad; Actuar responsablemente; Transformarla desde el bien; Guiarse por valores sólidos. Promueve un aprendizaje activo, centrado en el estudiante, y orientado a la vinculación teoría-práctica.",
+      "keywords": ["enfoque por competencias", "aprendizaje activo", "estudiante", "teoría-práctica", "valores"]
+    },
+    {
+      "id": "convergencia_carisma_salesiano",
+      "section": "Convergencia con el carisma salesiano",
+      "text": "El enfoque dialoga con la tradición salesiana: educación activa, preventiva, cercana a la vida del joven, orientada a la dignidad y el bien común. Busca la formación integral desde el Saber Ser, formando \"buenos cristianos y honrados ciudadanos\". Las competencias movilizan conocimientos, habilidades y actitudes para resolver situaciones reales (Perrenoud, 2004). Favorece la formación integral: vincula aprendizajes con la vida diaria; desarrolla capacidades para la convivencia y solidaridad; fomenta trabajo colaborativo y espíritu comunitario; fortalece autonomía y responsabilidad; promueve toma de decisiones éticas.",
+      "keywords": ["carisma salesiano", "buenos cristianos honrados ciudadanos", "Perrenoud", "saber ser", "formación integral", "trabajo colaborativo"]
+    },
+    {
+      "id": "componentes_competencia",
+      "section": "Componentes de una competencia",
+      "text": "Componentes de una competencia: Conocimientos (saber); Habilidades (saber hacer); Actitudes y valores (saber ser) → núcleo del sistema preventivo salesiano.",
+      "keywords": ["componentes", "saber", "saber hacer", "saber ser", "sistema preventivo"]
+    },
+    {
+      "id": "capacidades_libertades",
+      "section": "De las competencias a las capacidades",
+      "text": "Las capacidades son \"libertades sustanciales\" (Nussbaum, 2012). Expresión concreta del desarrollo integral de la persona. Incluyen: Capacidades cognitivas (pensar críticamente, resolver problemas); Capacidades socioemocionales (convivir, dialogar, autorregularse); Capacidades espirituales y éticas (buscar el bien, vivir con sentido, actuar con responsabilidad).",
+      "keywords": ["capacidades", "Nussbaum", "libertades sustanciales", "cognitivas", "socioemocionales", "espirituales", "éticas"]
+    },
+    {
+      "id": "fundamentos_pedagogicos",
+      "section": "Fundamentos pedagógicos",
+      "text": "Fundamentos pedagógicos del enfoque: Constructivismo (Piaget): aprendizaje como construcción activa. Socioconstructivismo (Vygotsky, Coll): aprendizaje socialmente construido. Aprendizaje situado (Lave y Wenger): conocimiento en contextos auténticos. Sistema Preventivo de Don Bosco: razón, religión, amor educativo.",
+      "keywords": ["constructivismo", "Piaget", "Vygotsky", "socioconstructivismo", "aprendizaje situado", "Don Bosco", "sistema preventivo", "razón religión amor"]
+    },
+    {
+      "id": "caracteristicas_enfoque",
+      "section": "Características del enfoque por competencias",
+      "text": "Características: Centrado en el estudiante como persona integral; Promueve aprendizaje activo, significativo y con sentido humano; Integra capacidades, conocimientos y actitudes (cabeza, manos, corazón); Parte de situaciones reales o desafiantes con sentido humano y comunitario; Promueve aprendizajes transferibles y reflexión metacognitiva; Evaluación continua y formativa orientada al crecimiento.",
+      "keywords": ["características", "estudiante", "aprendizaje significativo", "cabeza manos corazón", "situaciones reales", "metacognitiva", "evaluación formativa"]
+    },
+    {
+      "id": "seccion2_proposito_sentido",
+      "section": "Sección 2 - Propósito y sentido de la planificación",
+      "text": "Propósito de la sesión 2: Analizar ejemplos reales de planificaciones curriculares desde el enfoque por competencias. Sentido de la planificación: Proceso estratégico que orienta la labor pedagógica hacia el desarrollo integral. Organiza experiencias de aprendizaje para demostrar competencias mediante desempeños observables, retadores y progresivos (MINEDU, 2017).",
+      "keywords": ["sesión 2", "planificación curricular", "desempeños observables", "MINEDU 2017"]
+    },
+    {
+      "id": "peps_dimensiones",
+      "section": "Articulación con el carisma salesiano (PEPS)",
+      "text": "Articulación con el carisma salesiano (PEPS): Dimensión educativo-cultural → Aprender a conocer; Dimensión vocacional → Aprender a hacer; Dimensión evangelizadora → Aprender a ser; Dimensión experiencia asociativa → Aprender a convivir.",
+      "keywords": ["PEPS", "aprender a conocer", "aprender a hacer", "aprender a ser", "aprender a convivir", "Delors"]
+    },
+    {
+      "id": "principios_planificacion",
+      "section": "Principios de la planificación por competencias",
+      "text": "Principios de la planificación por competencias: Análisis del contexto (\"Conocer el patio\"); Atención a la diversidad (\"Acoger para educar\"); Construcción de saberes aplicados (\"Unir escuela, vida y fe\").",
+      "keywords": ["principios", "conocer el patio", "acoger para educar", "unir escuela vida fe"]
+    },
+    {
+      "id": "elementos_esenciales_planificacion",
+      "section": "Elementos esenciales de la planificación",
+      "text": "Elementos esenciales: Selección de competencias, capacidades y desempeños; Identificación de enfoques transversales (derechos, inclusivo, intercultural, ambiental, espiritual-ético); Planteamiento de situaciones significativas (corazón de la planificación); Organización de secuencias didácticas coherentes.",
+      "keywords": ["competencias", "capacidades", "desempeños", "enfoques transversales", "situaciones significativas", "secuencias didácticas"]
+    },
+    {
+      "id": "secuencia_didactica_tres_momentos",
+      "section": "Secuencia didáctica (inicio, desarrollo, cierre)",
+      "text": "Secuencia didáctica: Inicio: activar saberes previos, presentar situación significativa. Desarrollo: actividades de análisis, investigación, producción, experimentación, discusión, colaboración. Cierre: síntesis, reflexión, transferencia, socialización.",
+      "keywords": ["secuencia didáctica", "inicio", "desarrollo", "cierre", "saberes previos", "reflexión", "transferencia"]
+    },
+    {
+      "id": "seccion3_proposito_eval",
+      "section": "Sección 3 - Propósito sesión 3 (evaluación)",
+      "text": "Propósito de la sesión 3: Construir instrumentos de evaluación alineados a competencias.",
+      "keywords": ["sesión 3", "instrumentos de evaluación", "competencias"]
+    },
+    {
+      "id": "eval_formativa_definicion",
+      "section": "¿Qué es la evaluación formativa? (módulo 1)",
+      "text": "Evaluación formativa: Proceso sistemático para obtener evidencia continua del aprendizaje. Acompaña, orienta y transforma el proceso educativo. No clasifica ni etiqueta; reconoce el error como aprendizaje. Coincide con el espíritu del Sistema Preventivo: cercanía, diálogo, confianza, reconocimiento positivo.",
+      "keywords": ["evaluación formativa", "evidencia continua", "sistema preventivo", "cercanía", "diálogo"]
+    },
+    {
+      "id": "elementos_clave_eval",
+      "section": "Elementos clave de la evaluación formativa",
+      "text": "Elementos clave: Identificación del \"vacío\" (brecha entre lo actual y lo esperado); Retroalimentación formativa y oportuna; Participación activa del estudiante; Progresión del aprendizaje.",
+      "keywords": ["vacío", "brecha", "retroalimentación", "participación activa", "progresión"]
+    },
+    {
+      "id": "evidencias_aprendizaje_modulo1",
+      "section": "Evidencias de aprendizaje (módulo 1)",
+      "text": "Evidencias de aprendizaje: Situaciones y/o actividades significativas y auténticas que muestran el desempeño. Pueden ser producciones (textos, maquetas) o actuaciones (debates, actividades físicas). Deben ser: Auténticas y retadoras; Ricas en detalle; Diversas en tipo; Analizables a la luz de criterios.",
+      "keywords": ["evidencias de aprendizaje", "producciones", "actuaciones", "auténticas", "criterios"]
+    },
+    {
+      "id": "retroalimentacion_nicol",
+      "section": "Retroalimentación formativa (modelo Nicol)",
+      "text": "Retroalimentación formativa debe ser específica, oportuna, orientadora, respetuosa, motivadora. Modelo de feedback integrado (Nicol y Macfarlane-Dick): De tarea; De proceso; De autorregulación; Del yo.",
+      "keywords": ["retroalimentación formativa", "Nicol", "Macfarlane-Dick", "autorregulación", "feedback"]
+    },
+    {
+      "id": "instrumentos_evaluacion_tabla",
+      "section": "Instrumentos de evaluación (tabla)",
+      "text": "Instrumentos de evaluación: Lista de cotejo (verificar presencia/ausencia de criterios observables; ejemplo inicial: participación en cuidado del jardín). Escala de valoración (valorar grado de cumplimiento siempre/a veces/nunca; ejemplo primaria: perseverancia en resolución de problemas). Rúbrica (evaluar competencias complejas con niveles de logro; ejemplo secundaria: ensayo argumentativo). Registro anecdótico (narrar comportamientos significativos; ejemplo tutoría: acto espontáneo de servicio). Portafolio (monitorear trayectorias individuales; ejemplo secundaria: portafolio digital con proyectos). Diarios de reflexión (desarrollar metacognición; ejemplo primaria: reflexión semanal). Fichas de coevaluación (promover pensamiento crítico y responsabilidad; ejemplo secundaria: autoevaluación con criterios).",
+      "keywords": ["lista de cotejo", "escala de valoración", "rúbrica", "registro anecdótico", "portafolio", "diarios de reflexión", "coevaluación"]
+    },
+    {
+      "id": "actividades_practicas_sesiones",
+      "section": "Actividades prácticas por sesión",
+      "text": "Sesión 1: Actividad de entrada \"Mapa de creencias sobre las competencias\"; Actividad intermedia \"Conecta el concepto\"; Actividad de salida \"Micro-mapa conceptual aplicado a mi área\". Sesión 2: Actividad de inicio \"El eco de lo que aprendí\"; Actividad intermedia \"Radiografía de una planificación\" (estaciones de análisis); Actividad de salida \"Mi planificación transformada\". Sesión 3: Actividad de inicio \"Eco de lo que aprendí\"; Actividad central \"Analizamos nuestra forma de evaluar\"; Actividad final \"Mi instrumento transformado\"; Reflexión final \"Mirar, agradecer y proyectar\".",
+      "keywords": ["actividades prácticas", "mapa conceptual", "radiografía planificación", "planificación transformada", "instrumento transformado", "mirar agradecer proyectar"]
+    },
+    {
+      "id": "producto_final_modulo1_portafolio",
+      "section": "Producto final del módulo 1 (portafolio)",
+      "text": "Producto final del módulo: Planificación de una unidad del área revisada y actualizada según el enfoque por competencias. Evaluación formativa basada en competencias. Esta será la primera versión del portafolio docente.",
+      "keywords": ["producto final", "módulo 1", "planificación unidad", "evaluación formativa", "portafolio docente"]
+    }
+  ]
+}

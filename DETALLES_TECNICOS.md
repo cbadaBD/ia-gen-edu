@@ -10,7 +10,7 @@ Documento que describe la arquitectura técnica, conexión con AWS, RAG, técnic
 
 | Servicio | Uso en el proyecto |
 |----------|---------------------|
-| **Amazon Bedrock Runtime** | Invocación de modelos (Claude, Stable Diffusion XL) para texto e imágenes. |
+| **Amazon Bedrock Runtime** | Invocación de modelos de lenguaje (Claude) para generación de texto. |
 | **Amazon Bedrock Agent Runtime** | Recuperación desde Knowledge Bases cuando `BEDROCK_KB_CURRICULO_ID` está configurado. |
 | **Amazon S3** | Carga de currículo y comentarios (opcional; usado por `data_ingestion` y por KB). |
 
@@ -64,9 +64,9 @@ El archivo `bedrock-policy.json` incluye permisos de ejemplo para Bedrock Knowle
 ia-gen-edu/
 ├── src/
 │   ├── app/
-│   │   └── app.py              # UI Streamlit (tabs: programación, imágenes, comentarios)
+│   │   └── app.py              # UI Streamlit (tabs: unidad didáctica y sesión de aprendizaje)
 │   └── core/
-│       ├── bedrock_services.py # Lógica principal: Bedrock, programación, unidades, sesiones, imágenes, comentarios
+│       ├── bedrock_services.py # Lógica principal: Bedrock, programación, unidades, sesiones, análisis de comentarios
 │       ├── bedrock_summarization.py  # Resumen de comentarios (Claude v2)
 │       ├── competencias_curriculares.py # 31 competencias CNEB, áreas, grados
 │       ├── data_ingestion.py   # Subida a S3: comentarios y currículo
@@ -89,7 +89,7 @@ ia-gen-edu/
 ```
 
 - **Entrada de usuario:** `app.py` (Streamlit) → llamadas a `core` (bedrock_services, rag_service, competencias_curriculares, etc.).
-- **Salida:** archivos TXT/DOCX en `~/Desktop/content_edu_outputs/` (o ruta configurada); imágenes mostradas en la UI.
+- **Salida:** archivos TXT/DOCX en `~/Desktop/content_edu_outputs/` (o ruta configurada).
 
 ---
 
@@ -170,20 +170,14 @@ ia-gen-edu/
 - **En `bedrock_summarization.generate_summary_bedrock`:**  
   Rol “analista de mercado experto”; mismo esquema Comentarios / Resumen. Uso de API legacy (prompt/completion).
 
-### 4.4 Imágenes educativas
-
-- **Modelo:** `stability.stable-diffusion-xl-v1`.
-- **Prompt:** en inglés, tipo “Generate a high-quality, professional educational image for a high school. The image should be visually appealing and focus on the prompt: '{prompt_imagen}'”.
-- **Parámetros:** `text_prompts`, `cfg_scale=10`, `seed=0`, `steps=50`. Salida: base64 en `artifacts[0].base64`.
-
-### 4.5 Mejora de documento (`mejorar_documento_con_instruccion`)
+### 4.4 Mejora de documento (`mejorar_documento_con_instruccion`)
 
 - **Rol:** “Eres un editor experto en documentos educativos del MINEDU Perú.”
 - **Documento:** contenido entre triple comillas.
 - **Instrucciones:** bloque “INSTRUCCIONES DEL USUARIO” y “TAREA” (aplicar lo pedido, conservar estructura y formato de tablas, no añadir explicaciones, devolver solo el documento modificado).
 - **Temperature:** 0.4 para cambios controlados.
 
-### 4.6 Unidad didáctica y sesión de aprendizaje
+### 4.5 Unidad didáctica y sesión de aprendizaje
 
 - Prompts largos con área, grado, competencia de referencia, y formato de tabla `| ITEM | CONTENIDO |` para secciones (similar a programación). Se pide coherencia con el currículo y estructura de unidad/sesión.
 
@@ -196,7 +190,6 @@ ia-gen-edu/
 | `anthropic.claude-3-sonnet-20240229-v1:0` | Programación curricular (inicial + iteraciones), unidad didáctica, sesión de aprendizaje, resumen de comentarios en app, mejora de documento. |
 | `anthropic.claude-v2` | Resumen de comentarios en `bedrock_summarization.generate_summary_bedrock` (API legacy). |
 | `anthropic.claude-v2:1` | Generación con RAG en `rag_service.generar_con_contexto_rag`. |
-| `stability.stable-diffusion-xl-v1` | Generación de imágenes educativas. |
 
 - **Claude 3:** cuerpo con `anthropic_version: bedrock-2023-05-31`, `messages` (role `user`, `content`), `max_tokens`, `temperature`, `top_p`. Respuesta en `response_body['content'][0]['text']`.
 - **Claude v2 (legacy):** cuerpo con `prompt`, `max_tokens_to_sample`, `temperature`, `top_p`. Respuesta en `response_body['completion']`.
@@ -224,13 +217,10 @@ ia-gen-edu/
 2. **Programación curricular (con RAG):**  
    Formulario → `generar_programacion_curricular_rag()` → `buscar_contexto_curricular()` (KB o local) → `generar_con_contexto_rag()` → resultado + fuentes consultadas.
 
-3. **Imagen educativa:**  
-   Texto del usuario → `generar_imagen_educativa()` → `invoke_model` Stable Diffusion XL → imagen base64 mostrada en UI.
-
-4. **Análisis de comentarios:**  
+3. **Análisis de comentarios:**  
    Lista de comentarios → `generar_resumen_comentarios()` (o `generate_summary_bedrock`) → resumen → TXT/DOCX.
 
-5. **Unidad / sesión:**  
+4. **Unidad / sesión:**  
    Parámetros (área, grado, competencia) → `generar_unidad_didactica()` o `generar_sesion_aprendizaje()` → contenido en formato tabla → exportación.
 
 ---
@@ -261,14 +251,13 @@ flowchart TB
         B --> B3[generar_sesion_aprendizaje]
         B --> B4[mejorar_documento_con_instruccion]
         B --> B5[generar_programacion_curricular]
-        B --> B6[generar_imagen_educativa]
         B --> B7[generar_resumen_comentarios]
         R --> R1[buscar_contexto_curricular]
         R --> R2[generar_con_contexto_rag]
     end
 
     subgraph AWS["AWS"]
-        BR[Bedrock Runtime\nClaude, Stable Diffusion XL]
+        BR[Bedrock Runtime\nModelos Claude]
         KB[Bedrock Agent Runtime\nKnowledge Base]
         S3[(S3)]
     end
@@ -280,7 +269,6 @@ flowchart TB
 
     subgraph Salida["Salidas"]
         OUT1[TXT / DOCX]
-        OUT2[Imagen base64]
     end
 
     U --> A
@@ -310,7 +298,6 @@ flowchart TB
     B3 --> OUT1
     B5 --> OUT1
     B7 --> OUT1
-    B6 --> OUT2
 ```
 
 **Versión simplificada (flujo de alto nivel):**
@@ -333,14 +320,12 @@ flowchart LR
 
     subgraph Resultado
         DOC[TXT / DOCX]
-        IMG[Imágenes]
     end
 
     U --> UI
     Core --> AWS
     Core --> Data
     Core --> DOC
-    Core --> IMG
 ```
 
 ---

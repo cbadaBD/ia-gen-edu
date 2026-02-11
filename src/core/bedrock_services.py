@@ -911,41 +911,6 @@ Conserva el formato de tabla completo y mejora la calidad del contenido educativ
         print(f"Traceback: {traceback.format_exc()}")
         return f"Error al generar la programación curricular: {e}"
 
-def generar_imagen_promocional(prompt_imagen):
-    """
-    Genera una imagen promocional utilizando un modelo de difusión de Bedrock.
-    """
-    try:
-        bedrock_runtime = crear_cliente_bedrock()
-        prompt = f'''
-        Generate a high-quality, professional educational image for a high school.
-        The image should be visually appealing and focus on the prompt:
-        '{prompt_imagen}'
-        '''
-        body = json.dumps({
-            "text_prompts": [{"text": prompt}],
-            "cfg_scale": 10,
-            "seed": 0,
-            "steps": 50,
-        })
-        response = bedrock_runtime.invoke_model(
-            body=body,
-            modelId='stability.stable-diffusion-xl-v1',
-            accept='application/json',
-            contentType='application/json'
-        )
-        response_body = json.loads(response.get('body').read())
-        image_base64 = response_body.get('artifacts')[0].get('base64')
-        return f"data:image/png;base64,{image_base64}"
-    except NoCredentialsError as e:
-        error_msg = (
-            "❌ Error: No se encontraron credenciales de AWS.\n\n"
-            "Por favor, configura tus credenciales de AWS en el archivo .env o como variables de entorno.\n"
-        )
-        return f"Error al generar la imagen: {error_msg}"
-    except Exception as e:
-        return f"Error al generar la imagen: {e}"
-
 def generar_resumen_comentarios(comentarios):
     """
     Genera un resumen de comentarios de clientes utilizando un modelo de lenguaje de Bedrock.

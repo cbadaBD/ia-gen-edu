@@ -19,7 +19,7 @@ La interfaz web (Streamlit) permite generar y mejorar **2 tipos de contenido edu
    - **Chat integrado:** mismo flujo de mejora por instrucciones
    - Exportación a TXT y DOCX
 
-El backend (`src/core`) incluye además lógica para **programación curricular completa**, **imágenes educativas** (Stable Diffusion XL) y **análisis de comentarios**; ver `DETALLES_TECNICOS.md` para uso por API o futuras pantallas.
+El backend (`src/core`) incluye además lógica para **programación curricular completa** y **análisis de comentarios**; ver `DETALLES_TECNICOS.md` para uso por API o futuras pantallas.
 
 ---
 
@@ -27,7 +27,7 @@ El backend (`src/core`) incluye además lógica para **programación curricular 
 
 ### **Credenciales de AWS**
 
-El proyecto usa **Amazon Bedrock** (Claude, Stable Diffusion XL), por lo que necesitas:
+El proyecto usa **Amazon Bedrock** (modelos Claude), por lo que necesitas:
 
 1. **Crear archivo `.env`** en la raíz del proyecto:
 
