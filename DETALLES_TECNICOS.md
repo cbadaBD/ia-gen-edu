@@ -135,7 +135,7 @@ ia-gen-edu/
 
 - Método `generar_con_contexto_rag(prompt, contexto_documentos)`:
   - Prompt tipo: *“Eres un experto en educación peruana… CONTEXTO OFICIAL DEL MINEDU: {contexto_rag} INSTRUCCIONES: {prompt} Basa tu respuesta EXCLUSIVAMENTE en el contexto oficial…”*.
-  - Modelo usado en RAG: `anthropic.claude-v2:1` (formato `prompt`/`completion`), `temperature=0.3`, `max_tokens_to_sample=2000`.
+  - Modelo usado en RAG: `anthropic.claude-opus-4-6-v1` (formato Messages API), `temperature=0.3`, `max_tokens=2000`.
 
 - Función de alto nivel `generar_programacion_curricular_rag(grado, competencia, capacidades, contenidos)`:
   - Arma una query de búsqueda con grado, área, competencia y contenidos.
@@ -187,12 +187,9 @@ ia-gen-edu/
 
 | Modelo | Uso |
 |--------|-----|
-| `anthropic.claude-3-sonnet-20240229-v1:0` | Programación curricular (inicial + iteraciones), unidad didáctica, sesión de aprendizaje, resumen de comentarios en app, mejora de documento. |
-| `anthropic.claude-v2` | Resumen de comentarios en `bedrock_summarization.generate_summary_bedrock` (API legacy). |
-| `anthropic.claude-v2:1` | Generación con RAG en `rag_service.generar_con_contexto_rag`. |
+| `anthropic.claude-opus-4-6-v1` | Programación curricular (inicial + iteraciones), unidad didáctica, sesión de aprendizaje, resumen de comentarios, mejora de documento, generación con RAG. |
 
-- **Claude 3:** cuerpo con `anthropic_version: bedrock-2023-05-31`, `messages` (role `user`, `content`), `max_tokens`, `temperature`, `top_p`. Respuesta en `response_body['content'][0]['text']`.
-- **Claude v2 (legacy):** cuerpo con `prompt`, `max_tokens_to_sample`, `temperature`, `top_p`. Respuesta en `response_body['completion']`.
+- **Claude Opus 4.6:** cuerpo con `anthropic_version: bedrock-2023-05-31`, `messages` (role `user`, `content`), `max_tokens`, `temperature`, `top_p`. Respuesta en `response_body['content'][0]['text']`.
 
 ---
 

@@ -1432,8 +1432,26 @@ if SERVICES_OK:
                 help="Selecciona el grado (curso) de secundaria: 1° a 5°"
             )
 
-            # Selector de competencias (opcional, solo si está disponible)
-            competencia_seleccionada = ""
+            # Selector de competencias con checkboxes (opcional, solo si está disponible)
+            # Inicializar session_state para mantener las competencias seleccionadas
+            if 'competencias_seleccionadas_unidad' not in st.session_state:
+                st.session_state['competencias_seleccionadas_unidad'] = []
+            if 'area_curricular_anterior' not in st.session_state:
+                st.session_state['area_curricular_anterior'] = ""
+            
+            # Limpiar competencias si cambió el área curricular
+            area_actual = area_curricular.strip() if area_curricular and area_curricular.strip() and not area_curricular.startswith("— Seleccione") else ""
+            area_anterior = st.session_state.get('area_curricular_anterior', '')
+            
+            if area_actual and area_actual != area_anterior:
+                # Limpiar competencias cuando cambia el área
+                st.session_state['competencias_seleccionadas_unidad'] = []
+                st.session_state['area_curricular_anterior'] = area_actual
+            elif not area_actual:
+                # Si no hay área seleccionada, limpiar también
+                st.session_state['competencias_seleccionadas_unidad'] = []
+            
+            competencias_seleccionadas = []
             if COMPETENCIAS_DISPONIBLES:
                 try:
                     competencias_relacionadas = []
@@ -1441,26 +1459,62 @@ if SERVICES_OK:
                         competencias_relacionadas = obtener_competencias_por_area(area_curricular.strip())
                     
                     if competencias_relacionadas:
-                        st.info(f"📋 Se encontraron {len(competencias_relacionadas)} competencias relacionadas con '{area_curricular}':")
                         competencias_opciones = [formatear_competencia_para_tabla(comp) for comp in competencias_relacionadas]
-                        competencia_seleccionada = st.selectbox(
-                            "🎯 Competencia (opcional - se usará como referencia)",
-                            options=[""] + competencias_opciones,
-                            help="Selecciona una competencia relacionada con el área curricular"
+                        # Filtrar competencias seleccionadas previas que aún están disponibles
+                        competencias_previas = st.session_state.get('competencias_seleccionadas_unidad', [])
+                        competencias_validas = [c for c in competencias_previas if c in competencias_opciones]
+                        # Usar session_state para mantener la selección válida
+                        # Asegurar que default sea una lista válida
+                        default_competencias = competencias_validas if competencias_validas else []
+                        competencias_seleccionadas = st.multiselect(
+                            "🎯 Competencias",
+                            options=competencias_opciones,
+                            help="Selecciona una o más competencias relacionadas con el área curricular",
+                            default=default_competencias,
+                            key="multiselect_competencias_unidad_area"
                         )
+                        # Actualizar session_state con la selección actual siempre
+                        st.session_state['competencias_seleccionadas_unidad'] = list(competencias_seleccionadas) if competencias_seleccionadas else []
                     else:
                         # Si no hay área o no se encontraron competencias, mostrar todas
                         todas_competencias = obtener_todas_las_competencias()
                         if todas_competencias:
                             competencias_opciones = [formatear_competencia_para_tabla(comp) for comp in todas_competencias]
-                            competencia_seleccionada = st.selectbox(
-                                "🎯 Competencia (opcional - se usará como referencia)",
-                                options=[""] + competencias_opciones,
-                                help="Selecciona una competencia del Currículo Nacional"
+                            # Filtrar competencias seleccionadas previas que aún están disponibles
+                            competencias_previas = st.session_state.get('competencias_seleccionadas_unidad', [])
+                            competencias_validas = [c for c in competencias_previas if c in competencias_opciones]
+                            # Asegurar que default sea una lista válida
+                            default_competencias = competencias_validas if competencias_validas else []
+                            competencias_seleccionadas = st.multiselect(
+                                "🎯 Competencias",
+                                options=competencias_opciones,
+                                help="Selecciona una o más competencias del Currículo Nacional",
+                                default=default_competencias,
+                                key="multiselect_competencias_unidad_todas"
                             )
+                            # Actualizar session_state con la selección actual
+                            st.session_state['competencias_seleccionadas_unidad'] = competencias_seleccionadas if competencias_seleccionadas else []
                 except Exception:
                     # Si hay algún error, simplemente no mostrar el selector
-                    competencia_seleccionada = ""
+                    competencias_seleccionadas = []
+                    st.session_state['competencias_seleccionadas_unidad'] = []
+            
+            # Campo para temas
+            temas_unidad = st.text_area(
+                "📝 Temas (opcional)",
+                help="Especifica los temas o contenidos que deseas incluir en la unidad didáctica",
+                placeholder="Ejemplo: Temas relacionados con el área curricular seleccionada...",
+                height=80
+            )
+            
+            # Campo para número de sesiones
+            num_sesiones = st.number_input(
+                "🔢 Número de sesiones",
+                min_value=4,
+                value=6,
+                step=1,
+                help="Especifica cuántas sesiones de aprendizaje tendrá la unidad didáctica (mínimo 4)"
+            )
             
             generar = st.form_submit_button("🎯 Generar Unidad Didáctica", use_container_width=True)
         
@@ -1476,11 +1530,25 @@ if SERVICES_OK:
             else:
                 with st.spinner('🔄 Generando unidad didáctica...'):
                     try:
-                        # Pasar la competencia seleccionada si existe y está disponible
+                        # Pasar las competencias seleccionadas si existen y están disponibles
                         competencia_para_generar = None
-                        if COMPETENCIAS_DISPONIBLES and 'competencia_seleccionada' in locals() and competencia_seleccionada:
-                            competencia_para_generar = competencia_seleccionada
-                        resultado_raw = generar_unidad_didactica(area_curricular, grado, competencia_para_generar)
+                        competencias_para_usar = st.session_state.get('competencias_seleccionadas_unidad', [])
+                        if COMPETENCIAS_DISPONIBLES and competencias_para_usar:
+                            # Si hay múltiples competencias, concatenarlas con saltos de línea
+                            if len(competencias_para_usar) > 0:
+                                competencia_para_generar = "\n".join(competencias_para_usar)
+                        
+                        # Obtener temas y número de sesiones del formulario
+                        temas_para_generar = temas_unidad.strip() if temas_unidad and temas_unidad.strip() else None
+                        num_sesiones_para_generar = num_sesiones if num_sesiones >= 4 else 4
+                        
+                        resultado_raw = generar_unidad_didactica(
+                            area_curricular, 
+                            grado, 
+                            competencia_referencia=competencia_para_generar,
+                            temas=temas_para_generar,
+                            num_sesiones=num_sesiones_para_generar
+                        )
                         
                         # Formatear el contenido con encabezados y estructura completa
                         contenido_formateado = formatear_unidad_didactica(resultado_raw, area_curricular)

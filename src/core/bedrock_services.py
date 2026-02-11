@@ -250,6 +250,91 @@ def dividir_contenido_largo_en_filas(item, contenido):
     return filas if filas else [[item, ""]]
 
 
+def asegurar_tabla_existe(contenido):
+    """
+    Verifica si el contenido tiene una tabla. Si no la tiene, intenta crear una
+    envolviendo el contenido existente en formato de tabla.
+    
+    Args:
+        contenido: Texto que debería contener una tabla
+        
+    Returns:
+        Contenido con tabla garantizada
+    """
+    if not contenido:
+        return contenido
+    
+    contenido_stripped = contenido.strip()
+    
+    # Verificar si ya tiene una tabla (buscar encabezado o separador)
+    tiene_tabla = (
+        '| ITEM | CONTENIDO |' in contenido_stripped or
+        '|------|-----------|' in contenido_stripped or
+        (contenido_stripped.startswith('|') and '|' in contenido_stripped[1:])
+    )
+    
+    if tiene_tabla:
+        return contenido
+    
+    # Si no tiene tabla, crear una envolviendo el contenido
+    lineas = contenido_stripped.split('\n')
+    
+    # Buscar patrones comunes de items (palabras en mayúsculas o con **)
+    items_detectados = []
+    contenido_por_item = {}
+    item_actual = None
+    contenido_actual = []
+    
+    for linea in lineas:
+        linea_stripped = linea.strip()
+        if not linea_stripped:
+            continue
+        
+        # Detectar si es un item (palabras en mayúsculas, con **, o que termina en :)
+        es_item = (
+            linea_stripped.startswith('**') and linea_stripped.endswith('**') or
+            (linea_stripped.isupper() and len(linea_stripped.split()) <= 5) or
+            (':' in linea_stripped and len(linea_stripped.split(':')[0].split()) <= 4)
+        )
+        
+        if es_item and not item_actual:
+            # Nuevo item detectado
+            if item_actual:
+                contenido_por_item[item_actual] = '\n'.join(contenido_actual)
+            item_actual = linea_stripped.replace('**', '').replace(':', '').strip()
+            items_detectados.append(item_actual)
+            contenido_actual = []
+        elif item_actual:
+            contenido_actual.append(linea_stripped)
+        else:
+            # Contenido sin item asociado, crear item genérico
+            if not items_detectados:
+                item_actual = "CONTENIDO"
+                items_detectados.append(item_actual)
+            contenido_actual.append(linea_stripped)
+    
+    # Guardar último item
+    if item_actual:
+        contenido_por_item[item_actual] = '\n'.join(contenido_actual)
+    
+    # Si no se detectaron items estructurados, crear tabla simple con todo el contenido
+    if not items_detectados:
+        tabla = "| ITEM | CONTENIDO |\n|------|-----------|\n"
+        tabla += f"| CONTENIDO | {contenido_stripped} |"
+        return tabla
+    
+    # Construir tabla con items detectados
+    tabla = "| ITEM | CONTENIDO |\n|------|-----------|\n"
+    for item in items_detectados:
+        contenido_item = contenido_por_item.get(item, "").strip()
+        if contenido_item:
+            tabla += f"| **{item}** | {contenido_item} |\n"
+        else:
+            tabla += f"| **{item}** | |\n"
+    
+    return tabla.strip()
+
+
 def validar_y_corregir_formato_tabla(contenido):
     """
     Valida y corrige el formato de la tabla para asegurar que todo el contenido esté dentro de las celdas.
@@ -1016,7 +1101,7 @@ Responde solo con el documento completo modificado, sin texto antes ni después.
         return f"[Error al mejorar el documento: {e}]. Documento original sin cambios."
 
 
-def generar_unidad_didactica(area_curricular, grado, competencia_referencia=None):
+def generar_unidad_didactica(area_curricular, grado, competencia_referencia=None, temas=None, num_sesiones=6):
     """
     Genera una unidad didáctica completa para un área curricular específica
     utilizando un modelo de lenguaje de Bedrock.
@@ -1025,24 +1110,119 @@ def generar_unidad_didactica(area_curricular, grado, competencia_referencia=None
         area_curricular: Área curricular (ej: Ciencia y Tecnología, Matemática, Comunicación)
         grado: Grado del nivel educativo (ej: 3, 4, 5)
         competencia_referencia: Competencia del Currículo Nacional a usar como referencia (opcional)
+        temas: Temas o contenidos específicos a incluir en la unidad (opcional)
+        num_sesiones: Número de sesiones de aprendizaje (mínimo 4, por defecto 6)
     """
     try:
         bedrock_runtime = crear_cliente_bedrock()
        
-        # Construir contexto de competencia si se proporciona
+        # Construir contexto de competencia(s) si se proporciona(n)
         contexto_competencia = ""
         if competencia_referencia and competencia_referencia.strip():
-            contexto_competencia = f"""
+            # Detectar si hay múltiples competencias (separadas por saltos de línea)
+            competencias_lista = [c.strip() for c in competencia_referencia.split('\n') if c.strip()]
+            es_multiple = len(competencias_lista) > 1
+            
+            if es_multiple:
+                competencias_texto = '\n'.join([f"- {comp}" for comp in competencias_lista])
+                contexto_competencia = f"""
 
-COMPETENCIA DE REFERENCIA DEL CURRÍCULO NACIONAL:
+COMPETENCIAS OBLIGATORIAS DEL CURRÍCULO NACIONAL (DEBES USAR SOLO ESTAS Y NINGUNA OTRA):
+{competencias_texto}
+
+⚠️ CRÍTICO Y OBLIGATORIO ⚠️
+- DEBES trabajar EXCLUSIVAMENTE con estas {len(competencias_lista)} competencias seleccionadas arriba
+- NO agregues otras competencias que no estén en la lista anterior
+- NO inventes competencias adicionales
+- NO uses competencias del área que no fueron seleccionadas
+- En la sección "COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS" debes listar SOLO estas competencias
+- Los desempeños, capacidades y criterios de evaluación DEBEN estar relacionados ÚNICAMENTE con estas competencias específicas
+- Si hay múltiples competencias, trabaja con todas ellas pero NO agregues ninguna otra
+"""
+            else:
+                contexto_competencia = f"""
+
+═══════════════════════════════════════════════════════════════
+COMPETENCIA OBLIGATORIA DEL CURRÍCULO NACIONAL
+═══════════════════════════════════════════════════════════════
+SOLO SE HA SELECCIONADO UNA (1) COMPETENCIA. DEBES USAR SOLO ESTA:
+
 {competencia_referencia}
 
-Esta competencia debe ser considerada y alineada en la unidad didáctica. Asegúrate de que los desempeños, capacidades y criterios de evaluación estén relacionados con esta competencia.
+═══════════════════════════════════════════════════════════════
+⚠️ CRÍTICO Y OBLIGATORIO - LEE CON ATENCIÓN ⚠️
+═══════════════════════════════════════════════════════════════
+- CONTADOR DE COMPETENCIAS: Se ha seleccionado EXACTAMENTE 1 (UNA) competencia
+- DEBES trabajar EXCLUSIVAMENTE con esta ÚNICA competencia que aparece arriba
+- NO agregues otras competencias que no sean esta
+- NO inventes competencias adicionales
+- NO uses otras competencias del área aunque sean relacionadas o del mismo área
+- NO agregues competencias que "complementen" o "enriquezcan" la unidad
+- NO agregues competencias "típicas" del área si no fueron seleccionadas
+- En la sección "COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS" debes listar EXACTAMENTE UNA SOLA competencia: la que aparece arriba
+- Los desempeños, capacidades y criterios de evaluación DEBEN estar relacionados ÚNICAMENTE con esta competencia específica
+- Si el área tiene otras competencias, IGNÓRALAS completamente. Solo usa la competencia especificada arriba.
+
+RECUERDA: Solo hay UNA competencia seleccionada. Usa SOLO esa. No agregues ninguna otra.
+Si intentas agregar más competencias, estarás cometiendo un error grave.
+═══════════════════════════════════════════════════════════════
+"""
+        else:
+            # Si no se proporcionan competencias, la IA decide según el área y grado
+            contexto_competencia = f"""
+
+COMPETENCIAS A UTILIZAR:
+No se han especificado competencias específicas. Debes seleccionar y trabajar con las competencias más apropiadas del Currículo Nacional de Educación Básica (CNEB) para el área de {area_curricular} en el grado {grado} de secundaria. 
+Elige las competencias que mejor se alineen con el área curricular y el grado especificado, basándote en el Currículo Nacional vigente.
+"""
+        
+        # Construir contexto de temas si se proporciona
+        contexto_temas = ""
+        if temas and temas.strip():
+            contexto_temas = f"""
+
+TEMAS ESPECÍFICOS A INCLUIR EN LA UNIDAD DIDÁCTICA:
+{temas}
+
+Estos temas deben ser desarrollados en la unidad didáctica. Asegúrate de que los contenidos, desempeños y sesiones estén relacionados con estos temas.
+"""
+        
+        # Construir contexto de número de sesiones
+        contexto_sesiones = f"""
+
+NÚMERO DE SESIONES DE APRENDIZAJE:
+La unidad didáctica debe tener EXACTAMENTE {num_sesiones} sesiones de aprendizaje.
+En la sección "SECUENCIA DE SESIONES" debes incluir EXACTAMENTE {num_sesiones} sesiones, numeradas del 1 al {num_sesiones}.
 """
         
         prompt = f"""
 Actúa como especialista en diseño curricular. Tu tarea es crear una unidad didáctica completa para el área de {area_curricular} del grado {grado} de SECUNDARIA.
+
 {contexto_competencia}
+{contexto_temas}
+{contexto_sesiones}
+
+⚠️ CRÍTICO SOBRE EL ÁREA CURRICULAR ⚠️
+El área curricular especificada es: {area_curricular}
+DEBES generar contenido que sea EXCLUSIVAMENTE apropiado para esta área. 
+- Si el área es "Comunicación": el contenido debe ser sobre lectura, escritura, expresión oral, comprensión de textos, etc.
+- Si el área es "Ciencia y Tecnología": el contenido debe ser sobre ciencias naturales, experimentos, materia, energía, etc.
+- Si el área es "Matemática": el contenido debe ser sobre números, álgebra, geometría, estadística, etc.
+- Si el área es "Educación Física": el contenido debe ser sobre actividad física, deportes, salud, motricidad, etc.
+- Y así sucesivamente según el área especificada.
+
+NO generes contenido de otras áreas. El título, situación significativa, competencias, desempeños, evidencias y sesiones DEBEN estar relacionados ÚNICAMENTE con el área de {area_curricular}.
+
+{contexto_competencia}
+
+⚠️ INSTRUCCIÓN CRÍTICA Y OBLIGATORIA ⚠️
+DEBES GENERAR UNA TABLA EN FORMATO MARKDOWN. TU RESPUESTA DEBE COMENZAR INMEDIATAMENTE CON LA LÍNEA DE ENCABEZADO DE LA TABLA:
+
+| ITEM | CONTENIDO |
+|------|-----------|
+
+Y CONTINUAR CON LAS FILAS DE DATOS. NO AGREGUES NINGÚN TEXTO ANTES DE ESTA LÍNEA. NO AGREGUES EXPLICACIONES, INTRODUCCIONES NI COMENTARIOS. EMPIEZA DIRECTAMENTE CON LA TABLA.
+
 CRÍTICO: Debes generar SOLO una tabla con formato estricto. TODO el contenido debe estar DENTRO de las celdas de la tabla. NO generes nada fuera de la estructura de tabla. NO agregues texto antes o después de la tabla.
 
 TU RESPUESTA DEBE COMENZAR EXACTAMENTE CON: | ITEM | CONTENIDO |
@@ -1058,13 +1238,29 @@ FORMATO EXACTO REQUERIDO - Copia este formato exactamente (sin agregar nada ante
 
 | ITEM | CONTENIDO |
 |------|-----------|
-| **TÍTULO DE LA UNIDAD DIDÁCTICA** | Título completo aquí |
-| **SITUACIÓN SIGNIFICATIVA** | Contexto real completo aquí. Todo el párrafo dentro de esta celda. |
+| **TÍTULO DE LA UNIDAD DIDÁCTICA** | Título completo relacionado con el área de {area_curricular} |
+| **SITUACIÓN SIGNIFICATIVA** | Contexto real completo relacionado con el área de {area_curricular}. La situación debe ser significativa y relevante para estudiantes de {grado}° grado en el área de {area_curricular}. Todo el párrafo dentro de esta celda. |
 | **COMPETENCIAS TRANSVERSALES** | Se desenvuelve en entornos virtuales: Estándar: [texto completo del estándar]. Instrumento: [texto completo del instrumento]. Gestiona su aprendizaje de manera autónoma: Estándar: [texto completo del estándar]. Instrumento: [texto completo del instrumento]. TODO dentro de esta misma celda, usando saltos de línea para separar competencias. Solo texto plano, sin viñetas. |
-| **COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS** | Competencia: [texto]. Capacidades: [capacidad 1], [capacidad 2]. Desempeños: Desempeño 1: [descripción completa con características]. Desempeño 2: [descripción completa]. TODO dentro de esta misma celda. Solo texto plano, sin viñetas ni listas con guiones. |
-| **EVIDENCIAS DE APRENDIZAJE** | Evidencia 1: [Verbo + contenido + condición - debe demostrar logro de competencia]
-Evidencia 2: [Verbo + contenido + condición - debe demostrar logro de competencia]
-Ejemplos: "Explica las propiedades de la materia utilizando ejemplos concretos del entorno", "Clasifica materiales según sus propiedades físicas mediante observación directa"
+| **COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS** | 
+COMPETENCIA(S):
+[REVISA ARRIBA: Si se especificó una competencia obligatoria en la sección "COMPETENCIA OBLIGATORIA", debes usar EXACTAMENTE esa una competencia. Si se especificaron múltiples competencias obligatorias, usa EXACTAMENTE esas. Si NO hay ninguna competencia especificada arriba, entonces selecciona las competencias apropiadas del área de {area_curricular} según el CNEB. CRÍTICO: NO agregues competencias adicionales que no fueron especificadas explícitamente arriba. Si arriba dice "COMPETENCIA OBLIGATORIA" y solo hay una, entonces en esta sección debes listar SOLO esa una competencia, no más.]
+
+CAPACIDADES:
+[Capacidad 1 del área: descripción completa de la capacidad relacionada con la competencia y el área de {area_curricular}]
+[Capacidad 2 del área: descripción completa de la capacidad relacionada con la competencia y el área de {area_curricular}]
+[Capacidad 3 del área: descripción completa si aplica]
+[Listar todas las capacidades relevantes, cada una en una línea separada con su descripción completa]
+
+DESEMPEÑOS PRECISADOS:
+Desempeño 1: [Descripción completa, específica, observable y medible relacionada con el área de {area_curricular}. Debe incluir qué hace el estudiante, en qué contexto y cómo se evidencia.]
+Desempeño 2: [Descripción completa, específica, observable y medible relacionada con el área de {area_curricular}]
+Desempeño 3: [Descripción completa, específica, observable y medible relacionada con el área de {area_curricular}]
+[Continuar con 8-12 desempeños en total, cada uno numerado y con descripción completa. Cada desempeño debe estar en una línea separada.]
+
+TODO dentro de esta misma celda. Usar saltos de línea para separar las secciones COMPETENCIA(S), CAPACIDADES y DESEMPEÑOS PRECISADOS. Solo texto plano, sin viñetas ni listas con guiones. |
+| **EVIDENCIAS DE APRENDIZAJE** | Evidencia 1: [Verbo + contenido + condición - debe demostrar logro de competencia relacionado con el área de {area_curricular}]
+Evidencia 2: [Verbo + contenido + condición - debe demostrar logro de competencia relacionado con el área de {area_curricular}]
+Cada evidencia debe estar relacionada específicamente con el área de {area_curricular} y demostrar el logro de la competencia del área.
 Todo dentro de esta celda. |
 | **INSTRUMENTOS DE EVALUACIÓN** | Rúbrica: [contenido completo de la rúbrica con todos los niveles]
 Lista de cotejo: [contenido completo]
@@ -1072,9 +1268,10 @@ Todo dentro de esta celda. |
 | **VALORES Y ENFOQUES TRANSVERSALES** | Valores: [lista completa]
 Enfoques: [lista completa]
 Todo dentro de esta celda. |
-| **SECUENCIA DE SESIONES** | Sesión 1: [título siguiendo las reglas: pregunta, frase nominal o verbo en 1ra persona plural], actividades: [descripción], desempeños: [lista], tiempo: [duración], recursos: [materiales]
-Sesión 2: [título siguiendo las reglas], actividades: [descripción], desempeños: [lista], tiempo: [duración], recursos: [materiales]
-Ejemplos de títulos válidos: "¿Cómo identificamos...?", "Identificación de...", "Identificamos..."
+| **SECUENCIA DE SESIONES** | Sesión 1: [título relacionado con el área de {area_curricular}, siguiendo las reglas: pregunta, frase nominal o verbo en 1ra persona plural], actividades: [descripción relacionada con el área], desempeños: [lista relacionada con el área], tiempo: [duración], recursos: [materiales]
+Sesión 2: [título relacionado con el área de {area_curricular}, siguiendo las reglas], actividades: [descripción relacionada con el área], desempeños: [lista relacionada con el área], tiempo: [duración], recursos: [materiales]
+[Continuar con EXACTAMENTE {num_sesiones} sesiones en total, numeradas del 1 al {num_sesiones}]
+Todas las sesiones deben estar relacionadas con el área de {area_curricular}.
 Todo dentro de esta celda. |
 
 REGLAS ESTRICTAS DE FORMATO:
@@ -1092,50 +1289,40 @@ REGLAS ESTRICTAS DE FORMATO:
 12. Usa solo texto plano, sin formato de listas, sin viñetas, sin guiones para listas
 
 INSTRUCCIONES DE CONTENIDO:
-- El contenido debe ser apropiado para {grado}° grado de educación básica (Perú)
+- El contenido DEBE ser apropiado para el área de {area_curricular} en {grado}° grado de educación básica (Perú)
 - Basado en el Currículo Nacional de Educación Básica - MINEDU
 - Lenguaje claro y profesional
+- El título de la unidad, situación significativa, competencias, desempeños, evidencias y sesiones DEBEN estar relacionados ÚNICAMENTE con el área de {area_curricular}
+- Para COMPETENCIAS DE ÁREA: Si arriba se especificó una competencia obligatoria, usa SOLO esa competencia. Si se especificaron múltiples, usa SOLO esas. NO agregues competencias adicionales del área aunque sean relacionadas. Si solo hay una competencia especificada arriba, en la sección "COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS" debes listar EXACTAMENTE esa una competencia, no más.
 - Para COMPETENCIAS TRANSVERSALES: Incluir estándares completos e instrumentos detallados para cada competencia, todo dentro de la misma celda
-- Para DESEMPEÑOS: Entre 8-12 desempeños específicos, precisos y observables
-- Para EVIDENCIAS DE APRENDIZAJE: Estructura obligatoria: VERBO + CONTENIDO + CONDICIÓN. Cada evidencia debe demostrar claramente que se ha logrado la competencia. Ejemplos: "Explica las propiedades de la materia utilizando ejemplos concretos del entorno", "Clasifica materiales según sus propiedades físicas mediante observación directa", "Argumenta sobre los cambios de estado usando evidencia experimental". El verbo debe ser observable y medible, el contenido debe referirse al aprendizaje específico, y la condición debe indicar cómo o en qué contexto se demuestra.
-- Para INSTRUMENTOS: Rúbricas completas con niveles de logro (Inicio, Proceso, Logrado, Destacado)
-- Para SECUENCIA DE SESIONES: 4-6 sesiones con título, actividades, desempeños, tiempo y recursos
+- Para COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS: Estructura obligatoria dentro de la celda:
+  * Primero: COMPETENCIA(S): Listar la competencia o competencias del área según el CNEB
+  * Segundo: CAPACIDADES: Listar todas las capacidades relacionadas con la competencia, cada una con su descripción completa en líneas separadas
+  * Tercero: DESEMPEÑOS PRECISADOS: Entre 8-12 desempeños numerados (Desempeño 1:, Desempeño 2:, etc.), cada uno con descripción completa, específica, observable y medible relacionada con el área de {area_curricular}. Cada desempeño debe indicar qué hace el estudiante, en qué contexto y cómo se evidencia.
+- Para DESEMPEÑOS: Entre 8-12 desempeños específicos, precisos y observables relacionados con el área de {area_curricular}
+- Para EVIDENCIAS DE APRENDIZAJE: Estructura obligatoria: VERBO + CONTENIDO + CONDICIÓN. Cada evidencia debe demostrar claramente que se ha logrado la competencia del área de {area_curricular}. El verbo debe ser observable y medible, el contenido debe referirse al aprendizaje específico del área, y la condición debe indicar cómo o en qué contexto se demuestra.
+- Para INSTRUMENTOS: Rúbricas completas con niveles de logro (Inicio, Proceso, Logrado, Destacado) apropiadas para evaluar aprendizajes del área de {area_curricular}
+- Para SECUENCIA DE SESIONES: EXACTAMENTE {num_sesiones} sesiones con título, actividades, desempeños, tiempo y recursos, todas relacionadas con el área de {area_curricular}. Deben estar numeradas del 1 al {num_sesiones}.
 
 REGLAS CRÍTICAS PARA LOS TÍTULOS DE LAS SESIONES:
-El título de cada sesión debe comunicar la actividad principal en función de los propósitos de aprendizaje planteados. 
+El título de cada sesión debe comunicar la actividad principal relacionada con el área de {area_curricular} en función de los propósitos de aprendizaje planteados. 
 Puede redactarse de las siguientes formas (elige la más apropiada para cada sesión):
-1. En forma de pregunta: "¿Cómo identificamos las propiedades de la materia?"
-2. En frase nominal: "Identificación de las propiedades de la materia"
-3. Iniciando con verbo en primera persona del plural: "Identificamos las propiedades de la materia"
+1. En forma de pregunta relacionada con el área de {area_curricular}
+2. En frase nominal relacionada con el área de {area_curricular}
+3. Iniciando con verbo en primera persona del plural relacionado con el área de {area_curricular}
 
-Ejemplos de títulos bien redactados:
-- "¿Qué características tiene la materia?"
-- "Exploración de los estados de la materia"
-- "Analizamos los cambios de estado de la materia"
-- "¿Cómo se relacionan los estados físicos con la temperatura?"
-- "Clasificación de materiales según sus propiedades"
-- "Clasificamos materiales según sus propiedades"
-
-Cada título debe ser claro, específico y reflejar directamente el propósito de aprendizaje de esa sesión.
+Cada título debe ser claro, específico y reflejar directamente el propósito de aprendizaje de esa sesión dentro del área de {area_curricular}.
 
 REGLAS CRÍTICAS PARA LAS EVIDENCIAS DE APRENDIZAJE:
 Cada evidencia debe seguir la estructura: VERBO + CONTENIDO + CONDICIÓN
-Lo importante es que se demuestre que se ha logrado la competencia.
+Lo importante es que se demuestre que se ha logrado la competencia del área de {area_curricular}.
 
 Estructura obligatoria:
-- VERBO: Acción observable y medible (explica, clasifica, argumenta, identifica, compara, etc.)
-- CONTENIDO: El aprendizaje específico relacionado con la competencia
+- VERBO: Acción observable y medible apropiada para el área de {area_curricular} (explica, clasifica, argumenta, identifica, compara, escribe, lee, interpreta, produce, etc.)
+- CONTENIDO: El aprendizaje específico relacionado con la competencia del área de {area_curricular}
 - CONDICIÓN: Cómo o en qué contexto se demuestra el aprendizaje (mediante, utilizando, a través de, etc.)
 
-Ejemplos de evidencias bien estructuradas:
-- "Explica las propiedades de la materia utilizando ejemplos concretos del entorno"
-- "Clasifica materiales según sus propiedades físicas mediante observación directa"
-- "Argumenta sobre los cambios de estado usando evidencia experimental"
-- "Identifica los estados de la materia a través de experimentos prácticos"
-- "Compara diferentes materiales según sus propiedades mediante tablas comparativas"
-- "Diseña experimentos para demostrar cambios de estado utilizando materiales del laboratorio"
-
-Cada evidencia debe demostrar claramente el logro de la competencia planteada en la unidad didáctica.
+Cada evidencia debe demostrar claramente el logro de la competencia planteada en la unidad didáctica y estar relacionada específicamente con el área de {area_curricular}.
 
 EJEMPLO DE FORMATO CORRECTO PARA COMPETENCIAS TRANSVERSALES (dentro de la celda, solo texto plano):
 Se desenvuelve en entornos virtuales: Estándar: Utiliza responsablemente las tecnologías de la información y comunicación para interactuar en entornos virtuales. Instrumento: Lista de cotejo sobre el uso responsable de herramientas digitales.
@@ -1143,6 +1330,9 @@ Se desenvuelve en entornos virtuales: Estándar: Utiliza responsablemente las te
 Gestiona su aprendizaje de manera autónoma: Estándar: Monitorea y ajusta sus procesos de aprendizaje, utilizando estrategias que respondan a sus características y necesidades. Instrumento: Rúbrica para evaluar la autorregulación del aprendizaje.
 
 Recuerda: TODO debe estar dentro de la estructura de tabla, nada fuera. NO uses viñetas, solo texto plano.
+
+⚠️ VERIFICACIÓN FINAL SOBRE COMPETENCIAS ⚠️
+Antes de generar, verifica: Si arriba se especificó una competencia obligatoria, en la sección "COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS" debes listar EXACTAMENTE esa competencia y ninguna otra. Si se especificaron múltiples competencias obligatorias, lista EXACTAMENTE esas y ninguna otra. NO agregues competencias adicionales por tu cuenta.
 """
 
         body = json.dumps({
@@ -1171,8 +1361,11 @@ Recuerda: TODO debe estar dentro de la estructura de tabla, nada fuera. NO uses 
         # Limpiar etiquetas HTML del contenido generado
         contenido_limpiado = limpiar_contenido_html(contenido_generado)
         
+        # Asegurar que existe una tabla (crear si no existe)
+        contenido_con_tabla = asegurar_tabla_existe(contenido_limpiado)
+        
         # Validar y corregir formato de tabla
-        contenido_corregido = validar_y_corregir_formato_tabla(contenido_limpiado)
+        contenido_corregido = validar_y_corregir_formato_tabla(contenido_con_tabla)
         
         # Limpieza final agresiva para asegurar que todo esté dentro de las celdas
         contenido_final = limpieza_final_tabla(contenido_corregido)
@@ -1230,6 +1423,14 @@ INFORMACIÓN DE LA SESIÓN:
 - Grado: {grado}
 - Sección: {seccion}
 - Duración: {duracion}
+
+⚠️ INSTRUCCIÓN CRÍTICA Y OBLIGATORIA ⚠️
+DEBES GENERAR UNA TABLA EN FORMATO MARKDOWN. TU RESPUESTA DEBE COMENZAR INMEDIATAMENTE CON LA LÍNEA DE ENCABEZADO DE LA TABLA:
+
+| ITEM | CONTENIDO |
+|------|-----------|
+
+Y CONTINUAR CON LAS FILAS DE DATOS. NO AGREGUES NINGÚN TEXTO ANTES DE ESTA LÍNEA. NO AGREGUES EXPLICACIONES, INTRODUCCIONES NI COMENTARIOS. EMPIEZA DIRECTAMENTE CON LA TABLA.
 
 CRÍTICO: Debes generar SOLO una tabla con formato estricto. TODO el contenido debe estar DENTRO de las celdas de la tabla. NO generes nada fuera de la estructura de tabla. NO agregues texto antes o después de la tabla.
 
@@ -1323,8 +1524,11 @@ Recuerda: TODO debe estar dentro de la estructura de tabla, nada fuera. NO uses 
         # Limpiar etiquetas HTML del contenido generado
         contenido_limpiado = limpiar_contenido_html(contenido_generado)
         
+        # Asegurar que existe una tabla (crear si no existe)
+        contenido_con_tabla = asegurar_tabla_existe(contenido_limpiado)
+        
         # Validar y corregir formato de tabla
-        contenido_corregido = validar_y_corregir_formato_tabla(contenido_limpiado)
+        contenido_corregido = validar_y_corregir_formato_tabla(contenido_con_tabla)
         
         # Limpieza final agresiva para asegurar que todo esté dentro de las celdas
         contenido_final = limpieza_final_tabla(contenido_corregido)

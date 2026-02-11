@@ -13,34 +13,37 @@ def generate_summary_bedrock(comments_text_list):
     
     comments_str = "\n".join(comments_text_list)
     
-    prompt = f"""
-Human: Actúa como un analista de mercado experto. Lee los siguientes comentarios de clientes sobre un nuevo snack y genera un resumen conciso que destaque las opiniones clave, tanto positivas como negativas, y temas recurrentes.
+    prompt = f"""Actúa como un analista de mercado experto. Lee los siguientes comentarios de clientes sobre un nuevo snack y genera un resumen conciso que destaque las opiniones clave, tanto positivas como negativas, y temas recurrentes.
 
 --- Comentarios ---
 {comments_str}
 ---
 
-Resumen:
-Assistant:
-"""
+Resumen:"""
     
     try:
         body = json.dumps({
-            "prompt": prompt,
-            "max_tokens_to_sample": 500,
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 500,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
             "temperature": 0.5,
-            "top_p": 0.9,
+            "top_p": 0.9
         })
         
         response = bedrock_runtime.invoke_model(
             body=body,
-            modelId='anthropic.claude-v2', # 
+            modelId='anthropic.claude-opus-4-6-v1',
             accept='application/json',
             contentType='application/json'
         )
         
         response_body = json.loads(response.get('body').read())
-        return response_body.get('completion', "No se pudo generar el resumen.")
+        return response_body.get('content', [{}])[0].get('text', "No se pudo generar el resumen.")
     
     except Exception as e:
         print(f"❌ Error al generar resumen con Bedrock: {e}")

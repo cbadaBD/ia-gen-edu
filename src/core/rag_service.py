@@ -200,8 +200,7 @@ class RAGEducativoService:
             # Construir contexto enriquecido
             contexto_rag = self._construir_contexto_educativo(contexto_documentos)
             
-            prompt_con_rag = f"""
-Human: Eres un experto en educación peruana especializado en el Currículo Nacional de Educación Básica. 
+            prompt_con_rag = f"""Eres un experto en educación peruana especializado en el Currículo Nacional de Educación Básica. 
 
 CONTEXTO OFICIAL DEL MINEDU:
 {contexto_rag}
@@ -211,26 +210,30 @@ INSTRUCCIONES:
 
 Basa tu respuesta EXCLUSIVAMENTE en el contexto oficial proporcionado. Si no encuentras información suficiente en el contexto, menciona qué información específica faltaría para completar la respuesta.
 
-Estructura tu respuesta de manera profesional y alineada con los documentos oficiales del MINEDU.
-Assistant:
-"""
+Estructura tu respuesta de manera profesional y alineada con los documentos oficiales del MINEDU."""
             
             body = json.dumps({
-                "prompt": prompt_con_rag,
-                "max_tokens_to_sample": 2000,
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 2000,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt_con_rag
+                    }
+                ],
                 "temperature": 0.3,  # Más conservador para contenido educativo oficial
                 "top_p": 0.9
             })
             
             response = self.bedrock_runtime.invoke_model(
                 body=body,
-                modelId='anthropic.claude-v2:1',
+                modelId='anthropic.claude-opus-4-6-v1',
                 accept='application/json',
                 contentType='application/json'
             )
             
             response_body = json.loads(response.get('body').read())
-            return response_body.get('completion', '')
+            return response_body.get('content', [{}])[0].get('text', '')
             
         except Exception as e:
             logger.error(f"Error en generación RAG: {e}")
