@@ -1,0 +1,128 @@
+{
+  "metadata": {
+    "documento": "Metodologías Activas para la Innovación Educativa (Documento para Capacitación Docente - 2026)",
+    "tipo_recurso": "Módulo de Capacitación Docente / Guía Didáctica",
+    "nivel_educativo": "Educación Básica (Inicial, Primaria, Secundaria) - contextos salesianos",
+    "competencia_principal": "Aplicar metodologías activas centradas en el estudiante para promover autonomía, pensamiento crítico y aprendizaje significativo",
+    "audiencia": "Docentes de educación básica, facilitadores pedagógicos, coordinadores académicos",
+    "año": "2026"
+  },
+  "keywords": [
+    "metodologías activas",
+    "aula invertida",
+    "flipped classroom",
+    "aprendizaje basado en problemas",
+    "ABP",
+    "gamificación",
+    "enfoque por competencias",
+    "autonomía",
+    "Currículo Nacional",
+    "pedagogía salesiana",
+    "evaluación formativa",
+    "trabajo colaborativo",
+    "Bergmann",
+    "Sams",
+    "Bishop",
+    "Verleger",
+    "constructivismo",
+    "socioconstructivismo",
+    "Vygotsky",
+    "ZDP",
+    "Zimmerman",
+    "autorregulación",
+    "Barrows",
+    "Tamblyn",
+    "problema auténtico",
+    "Deci",
+    "Ryan",
+    "autodeterminación",
+    "flow",
+    "Csikszentmihalyi",
+    "Werbach",
+    "Hunter",
+    "sistema preventivo",
+    "Don Bosco",
+    "acompañamiento",
+    "protagonismo juvenil"
+  ],
+  "chunks": [
+    {
+      "id": "descripcion_general_modulo",
+      "section": "Descripción general del módulo",
+      "text": "Este módulo de capacitación aborda tres metodologías activas fundamentales para la innovación educativa: Aula Invertida, Aprendizaje Basado en Problemas (ABP) y Gamificación. Su propósito es que los docentes no solo las conozcan conceptualmente, sino que sean capaces de diseñar e implementar secuencias didácticas que las integren, centrando el proceso en el estudiante y alineándose con el enfoque por competencias del Currículo Nacional y la visión humanista de la educación salesiana.",
+      "keywords": ["módulo", "aula invertida", "ABP", "gamificación", "secuencias didácticas", "enfoque por competencias", "Currículo Nacional", "educación salesiana"]
+    },
+    {
+      "id": "sesion4_aula_invertida_definicion",
+      "section": "Sesión 4 - Aula Invertida - Definición y propósito",
+      "text": "Sesión 4: El Aula Invertida (Flipped Classroom). Propósito: Identificar estrategias de aula invertida que promuevan la autonomía. Definición clave: Metodología que reorganiza el tiempo y las actividades. Los estudiantes acceden a la información (ej. videos, lecturas) fuera del aula (fase asincrónica), y el tiempo en el aula (fase sincrónica) se dedica al aprendizaje activo, la resolución de problemas, proyectos y el acompañamiento personalizado del docente (Bergmann & Sams, 2012; Bishop & Verleger, 2013).",
+      "keywords": ["aula invertida", "flipped classroom", "fase asincrónica", "fase sincrónica", "autonomía", "Bergmann", "Sams", "Bishop", "Verleger"]
+    },
+    {
+      "id": "sesion4_fundamentos_teoricos",
+      "section": "Sesión 4 - Aula Invertida - Fundamentos teóricos",
+      "text": "Fundamentos teóricos del Aula Invertida: Constructivismo: El aprendizaje es una construcción activa. La fase previa activa esquemas, la fase presencial permite la reconstrucción y aplicación profunda. Socioconstructivismo (Vygotsky): La interacción social es clave. El aula se convierte en el espacio para el trabajo colaborativo dentro de la Zona de Desarrollo Próximo (ZDP). Aprendizaje Activo: Los estudiantes aplican, crean y discuten, en lugar de solo escuchar. Autorregulación (Zimmerman): Fomenta la autonomía, la responsabilidad y la metacognición al exigir que el estudiante gestione su propio aprendizaje previo.",
+      "keywords": ["constructivismo", "socioconstructivismo", "Vygotsky", "ZDP", "aprendizaje activo", "autorregulación", "Zimmerman", "metacognición"]
+    },
+    {
+      "id": "sesion4_componentes_implementacion",
+      "section": "Sesión 4 - Aula Invertida - Componentes para implementación",
+      "text": "Componentes esenciales para la implementación del Aula Invertida: Trabajo Previo Asincrónico: Material breve y guiado (videos de 3-8 min, lecturas con preguntas, infografías) para activación cognitiva. Verificación de Comprensión: Diagnóstico rápido al inicio de la clase (ticket de entrada, mini cuestionarios) para ajustar la sesión. Sesión Presencial Activa: Corazón del modelo. Actividades de alto nivel cognitivo: resolución de problemas, estudios de caso, debates, proyectos colaborativos. Retroalimentación Constante: Oportuna, específica y centrada en la tarea (Hattie & Timperley, 2007), guiando la progresión del aprendizaje. Rol del Docente: Pasa de ser un expositor a un facilitador, guía y diseñador de experiencias de aprendizaje. Rol del Estudiante: Adquiere un rol activo, autónomo y responsable de su propio proceso.",
+      "keywords": ["trabajo asincrónico", "ticket de entrada", "sesión presencial activa", "retroalimentación", "Hattie", "facilitador", "rol docente", "rol estudiante"]
+    },
+    {
+      "id": "sesion5_abp_definicion",
+      "section": "Sesión 5 - ABP - Definición y propósito",
+      "text": "Sesión 5: El Aprendizaje Basado en Problemas (ABP). Propósito: Formular situaciones problemáticas auténticas que movilicen competencias. Definición clave: Metodología centrada en el estudiante donde el aprendizaje se produce en el contexto de la solución de un problema auténtico, complejo y relevante, que no tiene una solución única o inmediata y exige investigación, colaboración y reflexión (Barrows & Tamblyn, 1980; Marra et al., 2014; Restrepo, 2005).",
+      "keywords": ["ABP", "aprendizaje basado en problemas", "problema auténtico", "Barrows", "Tamblyn", "investigación", "colaboración", "reflexión"]
+    },
+    {
+      "id": "sesion5_caracteristicas_problema_abp",
+      "section": "Sesión 5 - ABP - Características del problema",
+      "text": "Características esenciales del problema ABP: Motor del Aprendizaje: El problema es el punto de partida, no la teoría. El conocimiento se construye para resolverlo. Autenticidad y Relevancia: Debe conectar con la vida real, intereses o contexto del estudiante. Complejidad: Abierto a múltiples soluciones, demanda análisis, investigación y toma de decisiones. Cobertura: Involucra varias áreas o competencias de forma integrada.",
+      "keywords": ["motor del aprendizaje", "autenticidad", "relevancia", "complejidad", "cobertura", "múltiples soluciones"]
+    },
+    {
+      "id": "sesion5_fases_abp",
+      "section": "Sesión 5 - ABP - Fases para la aplicación",
+      "text": "Fases para la aplicación del ABP (Eggen & Kauchak, 2015): Identificar una pregunta: Plantear un reto que suscite curiosidad. Generar hipótesis: Los estudiantes proponen respuestas tentativas. Acopio de información: Investigar y recopilar datos para probar las hipótesis. Evaluación de hipótesis: Analizar la información y determinar si las hipótesis son válidas. Generalizar: Construir conclusiones y reflexionar sobre el proceso y los resultados. Criterios para formular un buen problema (Matriz Relevancia-Cobertura-Complejidad): Relevancia: ¿Se conecta con la vida real del estudiante? Cobertura: ¿Involucra varias capacidades o áreas? Complejidad: ¿Requiere investigación, análisis y no tiene una única respuesta?",
+      "keywords": ["fases ABP", "hipótesis", "acopio información", "Eggen", "Kauchak", "relevancia", "cobertura", "complejidad"]
+    },
+    {
+      "id": "sesion6_gamificacion_definicion",
+      "section": "Sesión 6 - Gamificación - Definición y propósito",
+      "text": "Sesión 6: Gamificación Educativa. Propósito: Diseñar experiencias de aprendizaje lúdicas y significativas. Definición clave: La incorporación de elementos, dinámicas y mecánicas propias de los juegos (puntos, niveles, narrativa, recompensas, desafíos) en contextos no lúdicos, como el aula, para estimular la motivación, el compromiso y potenciar el aprendizaje (Deterding et al., 2011; Werbach & Hunter, 2012).",
+      "keywords": ["gamificación", "puntos", "niveles", "narrativa", "recompensas", "desafíos", "motivación", "Werbach", "Hunter"]
+    },
+    {
+      "id": "sesion6_gamificacion_fundamentos",
+      "section": "Sesión 6 - Gamificación - Fundamentos teóricos",
+      "text": "Fundamentos teóricos de la Gamificación: Teoría de la Autodeterminación (Deci & Ryan): Satisface necesidades psicológicas básicas: autonomía (elegir caminos), competencia (percibir progreso) y relación (vínculo social). Constructivismo: El estudiante aprende haciendo, experimentando y enfrentando desafíos. Teoría del Flow (Csikszentmihalyi): Busca el equilibrio entre el desafío y la habilidad para generar un estado de concentración y disfrute profundo.",
+      "keywords": ["autodeterminación", "Deci", "Ryan", "autonomía", "competencia", "relación", "flow", "Csikszentmihalyi"]
+    },
+    {
+      "id": "sesion6_gamificacion_componentes",
+      "section": "Sesión 6 - Gamificación - Componentes y estrategias",
+      "text": "Componentes de la Gamificación (Werbach & Hunter): Dinámicas (el por qué): Narrativa, emociones, progresión, relaciones sociales. Mecánicas (el cómo): Puntos, niveles, retos y misiones, premios, clasificaciones. Componentes (el qué): Avatares, insignias, tableros de progreso, bienes virtuales. Estrategias de implementación: Transformar tareas en misiones con una narrativa atractiva. Usar aprendizaje por estaciones con niveles de dificultad creciente. Implementar sistemas de puntos y recompensas simbólicas (no materiales) para reforzar el esfuerzo y la colaboración. Asignar roles a los estudiantes (líder, investigador, cronista) para fomentar la responsabilidad. Integrar juegos analógicos (escape rooms, bingos, tableros) para hacer tangible el aprendizaje.",
+      "keywords": ["dinámicas", "mecánicas", "componentes", "misiones", "estaciones", "insignias", "roles", "escape room"]
+    },
+    {
+      "id": "enfoque_pedagogico_integrador",
+      "section": "Enfoque pedagógico integrador",
+      "text": "Enfoque pedagógico integrador: Centrado en el Estudiante: Las tres metodologías desplazan el foco de la enseñanza del profesor al aprendizaje del alumno, quien se vuelve protagonista activo. Enfoque por Competencias: Liberan tiempo de clase para evidencias de desempeño, facilitan la evaluación formativa (observación en proceso), promueven el uso integrado de saberes (saber, saber hacer, saber ser) y permiten tareas auténticas conectadas con la realidad (Perrenoud, 2004; Tobón, 2017; MINEDU, 2016).",
+      "keywords": ["centrado en el estudiante", "enfoque por competencias", "evaluación formativa", "Perrenoud", "Tobón", "MINEDU", "evidencias de desempeño"]
+    },
+    {
+      "id": "vision_salesiana_sistema_preventivo",
+      "section": "Visión Salesiana - Sistema Preventivo",
+      "text": "Visión Salesiana (Sistema Preventivo): El módulo enfatiza la coherencia de estas metodologías con la educación salesiana, al potenciar: Acompañamiento cercano: El docente tiene más tiempo para guiar personalmente. Protagonismo juvenil: Fomenta la autonomía y la responsabilidad (autogobierno). Ambiente de familia: El trabajo colaborativo y la gamificación fortalecen los vínculos y la convivencia fraterna. Alegría educativa: La gamificación y el aprendizaje activo convierten el aula en un espacio motivador y gozoso. Formación integral: Se desarrollan no solo habilidades cognitivas, sino también valores, actitudes éticas y habilidades socioemocionales (solidaridad, respeto, discernimiento).",
+      "keywords": ["sistema preventivo", "Don Bosco", "acompañamiento", "protagonismo juvenil", "ambiente de familia", "alegría educativa", "formación integral", "pedagogía salesiana"]
+    },
+    {
+      "id": "metadatos_documento",
+      "section": "Metadatos del documento",
+      "text": "Metadatos: Título: Metodologías Activas para la Innovación Educativa: Aula Invertida, ABP y Gamificación. Tipo de Recurso: Módulo de Capacitación Docente / Guía Didáctica. Nivel Educativo: Educación Básica (Inicial, Primaria, Secundaria) con foco en contextos salesianos. Competencia Principal: Aplicar metodologías activas centradas en el estudiante para promover autonomía, pensamiento crítico y aprendizaje significativo. Palabras Clave: Metodologías activas, aula invertida, flipped classroom, aprendizaje basado en problemas (ABP), gamificación, enfoque por competencias, autonomía, Currículo Nacional, pedagogía salesiana, evaluación formativa, trabajo colaborativo. Audiencia: Docentes de educación básica, facilitadores pedagógicos, coordinadores académicos.",
+      "keywords": ["metadatos", "capacitación docente", "2026", "guía didáctica", "educación básica", "contextos salesianos"]
+    }
+  ]
+}

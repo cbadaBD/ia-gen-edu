@@ -60,6 +60,7 @@ with st.spinner("🔄 Verificando dependencias..."):
             generar_sesion_aprendizaje,
             extraer_titulo_unidad_didactica,
             extraer_titulos_sesiones_unidad,
+            extraer_competencias_unidad_didactica,
             mejorar_documento_con_instruccion,
         )
         SERVICES_OK = True
@@ -142,7 +143,20 @@ def normalizar_tabla_para_streamlit(contenido):
     lineas = contenido.split('\n')
     lineas_normalizadas = []
     dentro_tabla = False
-    
+    tabla_headers = None  # Para tablas de 4+ columnas (Valores priorizados, Valores operativos, etc.)
+
+    def es_fila_encabezado_multi_columna(fila_celdas):
+        """Detecta si la fila es encabezado de tabla tipo Valores priorizados | Valores operativos | Enfoques transversales | Comportamientos observables."""
+        if len(fila_celdas) < 3:
+            return False
+        texto_unido = ' '.join(fila_celdas).upper()
+        palabras_clave = (
+            'PRIORIZADOS', 'OPERATIVOS', 'TRANSVERSALES', 'OBSERVABLES',
+            'VALORES PRIORIZADOS', 'ENFOQUES TRANSVERSALES', 'COMPORTAMIENTOS OBSERVABLES',
+            'CARTA IDENTIDAD', 'IDENTIDAD ESA'
+        )
+        return any(p in texto_unido for p in palabras_clave)
+
     def es_item_valido(texto):
         """Determina si un texto es un ITEM válido"""
         if not texto or len(texto.strip()) == 0:
@@ -199,7 +213,9 @@ def normalizar_tabla_para_streamlit(contenido):
                         'ENFOQUE', 'SESIÓN', 'MATERIAL', 'REFLEXIÓN', 'ESTÁNDAR',
                         'DESEMPEÑO', 'PROPÓSITO', 'ORGANIZACIÓN', 'EVALUACIÓN',
                         'DATOS', 'CRITERIO', 'MOMENTO', 'DIDÁCTICA', 'INFORMATIVOS',
-                        'SIGNIFICATIVA', 'PRECISADOS', 'APRENDIZAJE']
+                        'SIGNIFICATIVA', 'PRECISADOS', 'APRENDIZAJE',
+                        'DEFINICIÓN CONCEPTUAL', 'VALORES PRIORIZADOS', 'VALORES OPERATIVOS',
+                        'ENFOQUES TRANSVERSALES', 'COMPORTAMIENTOS OBSERVABLES']
         
         # Limpiar formato markdown bold para análisis
         texto_sin_bold = texto_original.replace('**', '').strip()
@@ -307,35 +323,50 @@ def normalizar_tabla_para_streamlit(contenido):
                         for fila_item, fila_contenido in filas:
                             lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
                 elif len(fila) >= 2:
-                    # Dos o más columnas: verificar si la primera es realmente un ITEM
-                    primera_col = fila[0]
-                    resto_contenido = ' '.join([c for c in fila[1:] if c])
-                    
-                    # Limpiar formato markdown bold del item si está presente
-                    item_limpio = primera_col.strip()
-                    if item_limpio.startswith('**') and item_limpio.endswith('**'):
-                        item_limpio = item_limpio[2:-2].strip()
-                    
-                    # Verificar si es un item válido (usar el texto limpio para verificación)
-                    es_item = es_item_valido(primera_col)
-                    
-                    # Si la primera columna NO es un ITEM válido, mover todo a la derecha
-                    if not es_item:
-                        # La primera columna es contenido, mover todo a la derecha con celda vacía
-                        contenido_completo = primera_col
-                        if resto_contenido:
-                            contenido_completo = primera_col + ' ' + resto_contenido
-                        # Dividir contenido largo en múltiples filas
-                        filas = dividir_contenido_largo_en_filas("", contenido_completo)
-                        for fila_item, fila_contenido in filas:
-                            lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
+                    # Tabla con 4+ columnas (Valores priorizados | Valores operativos | Enfoques transversales | Comportamientos observables)
+                    if len(fila) > 2 and es_fila_encabezado_multi_columna(fila) and tabla_headers is None:
+                        tabla_headers = [c.strip() for c in fila]
+                        # No añadir esta fila como datos; se usará como nombres de ítem para las siguientes filas
+                    elif tabla_headers is not None and len(fila) == len(tabla_headers):
+                        # Fila de datos: expandir en una fila ITEM|CONTENIDO por cada columna
+                        for j in range(len(fila)):
+                            item_nombre = tabla_headers[j]
+                            contenido_celda = fila[j].strip()
+                            filas = dividir_contenido_largo_en_filas(item_nombre, contenido_celda)
+                            for fila_item, fila_contenido in filas:
+                                lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
                     else:
-                        # La primera columna es un ITEM válido
-                        # Usar el item original (con ** si estaba) para mantener formato
-                        # Dividir contenido largo en múltiples filas si tiene saltos de línea
-                        filas = dividir_contenido_largo_en_filas(primera_col, resto_contenido)
-                        for fila_item, fila_contenido in filas:
-                            lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
+                        if tabla_headers is not None:
+                            tabla_headers = None
+                        # Dos o más columnas: verificar si la primera es realmente un ITEM
+                        primera_col = fila[0]
+                        resto_contenido = ' '.join([c for c in fila[1:] if c])
+
+                        # Limpiar formato markdown bold del item si está presente
+                        item_limpio = primera_col.strip()
+                        if item_limpio.startswith('**') and item_limpio.endswith('**'):
+                            item_limpio = item_limpio[2:-2].strip()
+
+                        # Verificar si es un item válido (usar el texto limpio para verificación)
+                        es_item = es_item_valido(primera_col)
+
+                        # Si la primera columna NO es un ITEM válido, mover todo a la derecha
+                        if not es_item:
+                            # La primera columna es contenido, mover todo a la derecha con celda vacía
+                            contenido_completo = primera_col
+                            if resto_contenido:
+                                contenido_completo = primera_col + ' ' + resto_contenido
+                            # Dividir contenido largo en múltiples filas
+                            filas = dividir_contenido_largo_en_filas("", contenido_completo)
+                            for fila_item, fila_contenido in filas:
+                                lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
+                        else:
+                            # La primera columna es un ITEM válido
+                            # Usar el item original (con ** si estaba) para mantener formato
+                            # Dividir contenido largo en múltiples filas si tiene saltos de línea
+                            filas = dividir_contenido_largo_en_filas(primera_col, resto_contenido)
+                            for fila_item, fila_contenido in filas:
+                                lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
         else:
             # Línea fuera de tabla (sin formato |)
             if dentro_tabla and linea_stripped:
@@ -354,9 +385,11 @@ def normalizar_tabla_para_streamlit(contenido):
                             lineas_normalizadas.append(f"| {fila_item} | {fila_contenido} |")
                     else:
                         dentro_tabla = False
+                        tabla_headers = None
                         lineas_normalizadas.append(linea)
                 else:
                     dentro_tabla = False
+                    tabla_headers = None
                     lineas_normalizadas.append(linea)
             else:
                 lineas_normalizadas.append(linea)
@@ -1766,7 +1799,7 @@ if SERVICES_OK:
                     "📚 Título de la Unidad",
                     value=st.session_state.get('unidad_generada', {}).get('titulo', ''),
                     placeholder="Ej: La Materia y sus Propiedades",
-                    help="Título de la unidad didáctica generada anteriormente"
+                    help="Título de la unidad didáctica generada anteriormente (o ingresar manualmente)"
                 )
                 
                 # Título de la sesión - mostrar selector si hay sesiones disponibles
@@ -1781,7 +1814,7 @@ if SERVICES_OK:
                         "O escribe un título personalizado",
                         value="",
                         placeholder="Ej: Identificamos las propiedades de la materia",
-                        help="Título específico de la sesión de aprendizaje (se usará este si está lleno, o el seleccionado arriba)"
+                        help="Título específico de la sesión (se usará este si está lleno, o el seleccionado arriba)"
                     )
                     # Determinar qué título usar: personalizado tiene prioridad
                     titulo_sesion = titulo_sesion_personalizado.strip() if titulo_sesion_personalizado.strip() else (titulo_sesion_seleccionado if titulo_sesion_seleccionado else "")
@@ -1792,6 +1825,28 @@ if SERVICES_OK:
                         help="Título específico de la sesión de aprendizaje"
                     )
                 
+                # Competencia (viene de la unidad generada o se puede modificar/ingresar)
+                competencias_extraidas = None
+                if 'unidad_generada' in st.session_state:
+                    contenido_unidad = st.session_state['unidad_generada'].get('contenido') or st.session_state.get('documento_raw_unidad', '')
+                    if contenido_unidad:
+                        competencias_extraidas = extraer_competencias_unidad_didactica(contenido_unidad)
+                competencia = st.text_area(
+                    "📋 Competencia",
+                    value=competencias_extraidas or "",
+                    placeholder="Competencia(s), capacidades y criterios de evaluación. Se llena automáticamente si generaste una unidad.",
+                    help="Competencia a desarrollar. Se obtiene de la unidad didáctica generada o puedes ingresarla manualmente.",
+                    height=80
+                )
+                
+                # Tema
+                tema = st.text_input(
+                    "📝 Tema",
+                    placeholder="Ej: Propiedades de la materia, Ecuaciones lineales, Comprensión de textos",
+                    help="Tema o contenido específico de la sesión"
+                )
+            
+            with col2:
                 # Nivel fijo: Solo Secundaria
                 nivel = "Secundaria"
                 st.text_input(
@@ -1800,8 +1855,7 @@ if SERVICES_OK:
                     disabled=True,
                     help="Nivel educativo (limitado a Secundaria)"
                 )
-            
-            with col2:
+                
                 # Mostrar grado de la unidad generada (si existe)
                 grado_unidad = st.session_state.get('unidad_generada', {}).get('grado', '')
                 if grado_unidad:
@@ -1827,6 +1881,25 @@ if SERVICES_OK:
                     placeholder="Ej: 90 minutos, 2 horas",
                     help="Duración de la sesión de aprendizaje"
                 )
+                
+                # Metodología
+                METODOLOGIAS = [
+                    "— Seleccione metodología —",
+                    "Aprendizaje Basado en Proyectos (ABP)",
+                    "Aprendizaje Basado en Problemas",
+                    "Flipped Classroom (Aula invertida)",
+                    "Gamificación",
+                    "Aprendizaje Cooperativo",
+                    "Enfoque de Indagación Científica",
+                    "Método de Casos",
+                    "Design Thinking",
+                    "Otro (describir en tema)"
+                ]
+                metodologia = st.selectbox(
+                    "📐 Metodología",
+                    options=METODOLOGIAS,
+                    help="Metodología o enfoque pedagógico a utilizar en la sesión"
+                )
             
             generar = st.form_submit_button("🎯 Generar Sesión de Aprendizaje", use_container_width=True)
         
@@ -1837,11 +1910,24 @@ if SERVICES_OK:
             titulo_sesion = str(titulo_sesion) if titulo_sesion else ''
             seccion = str(seccion) if seccion else ''
             duracion = str(duracion) if duracion else ''
+            competencia = str(competencia) if competencia else ''
+            tema = str(tema) if tema else ''
+            metodologia = str(metodologia) if metodologia else ''
             
             # Obtener grado de la unidad generada si no está en el formulario
             grado_actual = str(grado) if 'grado' in locals() and grado else ''
             if not grado_actual and 'unidad_generada' in st.session_state:
                 grado_actual = str(st.session_state['unidad_generada'].get('grado', '') or '')
+            
+            # Usar competencia del formulario; si está vacía, intentar extraer de la unidad
+            competencias_para_sesion = competencia.strip() if competencia.strip() else None
+            if not competencias_para_sesion and 'unidad_generada' in st.session_state:
+                contenido_unidad = st.session_state['unidad_generada'].get('contenido') or st.session_state.get('documento_raw_unidad', '')
+                if contenido_unidad:
+                    competencias_para_sesion = extraer_competencias_unidad_didactica(contenido_unidad)
+            
+            # Metodología: no enviar si es el placeholder
+            metodologia_para_sesion = metodologia.strip() if metodologia.strip() and not metodologia.startswith("—") else None
             
             # Validar campos requeridos
             if not titulo_unidad.strip():
@@ -1865,7 +1951,10 @@ if SERVICES_OK:
                             nivel,
                             grado_actual,
                             seccion,
-                            duracion
+                            duracion,
+                            competencias_unidad=competencias_para_sesion,
+                            tema=tema.strip() or None,
+                            metodologia=metodologia_para_sesion
                         )
                         
                         # Formatear el contenido con encabezados y estructura completa

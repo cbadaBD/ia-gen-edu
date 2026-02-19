@@ -17,6 +17,35 @@ except (ImportError, Exception):
     # Si no hay dotenv o hay algún error, continuar (las variables pueden venir del sistema)
     pass
 
+# Valores institucionales permitidos (solo estos deben aparecer en documentos generados)
+VALORES_PERMITIDOS = [
+    "Participación",
+    "Respeto",
+    "Solidaridad",
+    "Conciencia crítica",
+    "Compromiso ambiental",
+    "Apertura y acogida",
+    "Gratitud y donación",
+    "Compasión y misericordia",
+    "Cuidado y promoción de la vida",
+    "Discernimiento y compromiso",
+    "Encuentro personal con Jesucristo",
+    "Caridad",
+    "Experiencia comunitaria de la fe",
+]
+
+# Enfoques transversales permitidos (solo estos deben aparecer en documentos generados)
+ENFOQUES_TRANSVERSALES_PERMITIDOS = [
+    "Búsqueda de la excelencia: Superación personal.",
+    "Enfoque ambiental: justicia y solidaridad.",
+    "Enfoque de derecho: conciencia de derechos.",
+    "Atención a la diversidad: respeto por las diferencias.",
+    "Enfoque orientación al bien común: empatía y solidaridad.",
+    "Enfoque de derecho: libertad y responsabilidad.",
+    "Enfoque Ambiental: respeto a toda forma de vida, solidaridad planetaria y equidad intergeneracional.",
+    "Enfoque intercultural: respeto a la identidad cultural y diálogo intercultural.",
+]
+
 def crear_cliente_bedrock():
     """
     Crea un cliente de Bedrock con manejo adecuado de credenciales.
@@ -528,6 +557,65 @@ def extraer_titulo_unidad_didactica(contenido):
     
     return None
 
+def extraer_competencias_unidad_didactica(contenido):
+    """
+    Extrae las competencias, capacidades y criterios de evaluación de la unidad didáctica.
+    
+    Args:
+        contenido: Contenido de la unidad didáctica en formato de tabla
+        
+    Returns:
+        Texto con competencias, capacidades y desempeños o None si no se encuentra
+    """
+    if not contenido:
+        return None
+    
+    lineas = contenido.split('\n')
+    dentro_competencias = False
+    contenido_competencias = []
+    
+    for linea in lineas:
+        # Buscar la sección de COMPETENCIAS (incluye COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN)
+        if 'COMPETENCIAS' in linea.upper() and ('CAPACIDADES' in linea.upper() or 'DESEMPEÑOS' in linea.upper() or 'CRITERIOS' in linea.upper()):
+            dentro_competencias = True
+            # Extraer contenido de esta línea si está presente
+            if '|' in linea:
+                partes = linea.split('|')
+                if len(partes) >= 3:
+                    contenido_celda = partes[2].strip() if len(partes) > 2 else (partes[1].strip() if len(partes) > 1 else '')
+                    if contenido_celda and contenido_celda.upper() not in ['COMPETENCIAS', 'CAPACIDADES', 'DESEMPEÑOS', 'CRITERIOS', 'COMPETENCIAS DE ÁREA']:
+                        contenido_competencias.append(contenido_celda)
+            continue
+        
+        # Si estamos dentro de la sección de competencias, seguir extrayendo
+        if dentro_competencias:
+            if '|' in linea:
+                partes = linea.split('|')
+                # Si encontramos otro ítem (columna izquierda tiene contenido), salir
+                if len(partes) >= 2:
+                    item_col = partes[1].strip()
+                    if item_col and item_col.upper() not in ['COMPETENCIAS', 'CAPACIDADES', 'DESEMPEÑOS', 'CRITERIOS'] and '**' in item_col:
+                        break
+                    # Si hay contenido en la columna derecha, agregarlo
+                    if len(partes) >= 3:
+                        contenido_celda = partes[2].strip()
+                        if contenido_celda:
+                            contenido_competencias.append(contenido_celda)
+            elif linea.strip() and not linea.strip().startswith('|'):
+                # Línea fuera de tabla, terminar
+                break
+    
+    if contenido_competencias:
+        # Unir todo el contenido de competencias
+        texto_completo = ' '.join(contenido_competencias)
+        # Limpiar etiquetas HTML
+        texto_completo = re.sub(r'<[^>]+>', '', texto_completo)
+        texto_completo = texto_completo.strip()
+        if texto_completo:
+            return texto_completo
+    
+    return None
+
 def extraer_titulos_sesiones_unidad(contenido):
     """
     Extrae los títulos de las sesiones de aprendizaje de la unidad didáctica.
@@ -575,12 +663,19 @@ def extraer_titulos_sesiones_unidad(contenido):
         matches = re.findall(r'Sesi[oó]n\s+\d+[:\-]\s*([^\n\.]+)', contenido_completo, re.IGNORECASE)
         titulos_sesiones = [m.strip() for m in matches if m.strip() and len(m.strip()) > 5]
     
-    # Limpiar títulos de etiquetas HTML y formato
+    # Limpiar títulos: solo el nombre de la sesión, sin actividades, desempeños, tiempo, recursos (evita superar 255 chars en APIs)
     titulos_limpios = []
     for titulo in titulos_sesiones:
         titulo_limpio = re.sub(r'<[^>]+>', '', titulo)
         titulo_limpio = re.sub(r'\*\*', '', titulo_limpio)
         titulo_limpio = titulo_limpio.strip()
+        # Quedarse solo con el título de la sesión; cortar en ", actividades", ", desempeños", ", tiempo", ", recursos"
+        for sep in [', actividades', ', desempeños', ', tiempo', ', recursos', '; actividades', '; desempeños']:
+            if sep in titulo_limpio:
+                titulo_limpio = titulo_limpio.split(sep)[0].strip()
+                break
+        # Quitar coma o dos puntos finales
+        titulo_limpio = titulo_limpio.rstrip('.,;')
         if titulo_limpio and len(titulo_limpio) > 5:
             titulos_limpios.append(titulo_limpio)
     
@@ -777,6 +872,9 @@ CONTENIDO DEL DOCUMENTO DE REFERENCIA:
 ---
 """
         
+        enfoques_transversales_texto = '\n     '.join(ENFOQUES_TRANSVERSALES_PERMITIDOS)
+        valores_texto = ', '.join(VALORES_PERMITIDOS)
+        
         prompt_inicial = f"""
 Actúa como especialista en programación curricular. Tu tarea es crear una tabla de programación educativa para estudiantes de {grado_secundaria}º de secundaria del área de Ciencia y Tecnología.
 
@@ -812,7 +910,8 @@ INSTRUCCIONES PARA COMPLETAR:
 6. Presenta todo en formato de tabla clara y organizada
 7. Al final incluye secciones adicionales en formato de tabla:
    - COMPETENCIAS TRANSVERSALES (Se desenvuelve en entornos virtuales y Gestiona su aprendizaje)
-   - ENFOQUES TRANSVERSALES (con valores y comportamientos observables)
+   - ENFOQUES TRANSVERSALES: DEBES usar EXACTAMENTE y SOLO estos enfoques, sin agregar ni omitir ninguno:
+     {enfoques_transversales_texto}
    - SECUENCIA DE 6 SESIONES DE APRENDIZAJE (con títulos y actividades principales)
 
 CONSIDERACIONES IMPORTANTES:
@@ -837,8 +936,8 @@ IMPORTANTE: El formato debe ser EXACTAMENTE | ITEM | CONTENIDO | donde ITEM va a
 | ITEM | CONTENIDO |
 |------|-----------|
 | **COMPETENCIAS TRANSVERSALES** | [contenido completo dentro de esta celda] |
-| **ENFOQUES TRANSVERSALES** | [contenido completo dentro de esta celda] |
-| **SECUENCIA DE SESIONES DE APRENDIZAJE** | Sesión 1: [título completo siguiendo reglas: pregunta, frase nominal o verbo en 1ra persona plural]. Actividades: [descripción]. Sesión 2: [título completo siguiendo reglas]. Actividades: [descripción]. [continuar con todas las sesiones, todo dentro de esta celda] |
+| **ENFOQUES TRANSVERSALES** | [incluir EXACTAMENTE los 8 enfoques indicados arriba, cada uno en una línea] |
+| **SECUENCIA DE SESIONES DE APRENDIZAJE** | Sesión 1: [solo título siguiendo reglas: pregunta, frase nominal o verbo en 1ra persona plural]. Sesión 2: [solo título]. [continuar con todas las sesiones; solo títulos, sin actividades/desempeños/tiempo/recursos en esta celda] |
 
 CRÍTICO: NUNCA inviertas el orden. ITEM siempre a la izquierda, CONTENIDO siempre a la derecha.
 
@@ -1135,8 +1234,8 @@ COMPETENCIAS OBLIGATORIAS DEL CURRÍCULO NACIONAL (DEBES USAR SOLO ESTAS Y NINGU
 - NO agregues otras competencias que no estén en la lista anterior
 - NO inventes competencias adicionales
 - NO uses competencias del área que no fueron seleccionadas
-- En la sección "COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS" debes listar SOLO estas competencias
-- Los desempeños, capacidades y criterios de evaluación DEBEN estar relacionados ÚNICAMENTE con estas competencias específicas
+- En la sección "COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN" debes listar SOLO estas competencias
+- Las capacidades y criterios de evaluación DEBEN estar relacionados ÚNICAMENTE con estas competencias específicas
 - Si hay múltiples competencias, trabaja con todas ellas pero NO agregues ninguna otra
 """
             else:
@@ -1159,8 +1258,8 @@ SOLO SE HA SELECCIONADO UNA (1) COMPETENCIA. DEBES USAR SOLO ESTA:
 - NO uses otras competencias del área aunque sean relacionadas o del mismo área
 - NO agregues competencias que "complementen" o "enriquezcan" la unidad
 - NO agregues competencias "típicas" del área si no fueron seleccionadas
-- En la sección "COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS" debes listar EXACTAMENTE UNA SOLA competencia: la que aparece arriba
-- Los desempeños, capacidades y criterios de evaluación DEBEN estar relacionados ÚNICAMENTE con esta competencia específica
+- En la sección "COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN" debes listar EXACTAMENTE UNA SOLA competencia: la que aparece arriba
+- Las capacidades y criterios de evaluación DEBEN estar relacionados ÚNICAMENTE con esta competencia específica
 - Si el área tiene otras competencias, IGNÓRALAS completamente. Solo usa la competencia especificada arriba.
 
 RECUERDA: Solo hay UNA competencia seleccionada. Usa SOLO esa. No agregues ninguna otra.
@@ -1184,7 +1283,7 @@ Elige las competencias que mejor se alineen con el área curricular y el grado e
 TEMAS ESPECÍFICOS A INCLUIR EN LA UNIDAD DIDÁCTICA:
 {temas}
 
-Estos temas deben ser desarrollados en la unidad didáctica. Asegúrate de que los contenidos, desempeños y sesiones estén relacionados con estos temas.
+Estos temas deben ser desarrollados en la unidad didáctica. Asegúrate de que los contenidos, criterios de evaluación y sesiones estén relacionados con estos temas.
 """
         
         # Construir contexto de número de sesiones
@@ -1194,6 +1293,9 @@ NÚMERO DE SESIONES DE APRENDIZAJE:
 La unidad didáctica debe tener EXACTAMENTE {num_sesiones} sesiones de aprendizaje.
 En la sección "SECUENCIA DE SESIONES" debes incluir EXACTAMENTE {num_sesiones} sesiones, numeradas del 1 al {num_sesiones}.
 """
+        
+        valores_texto = ', '.join(VALORES_PERMITIDOS)
+        enfoques_texto = '; '.join(ENFOQUES_TRANSVERSALES_PERMITIDOS)
         
         prompt = f"""
 Actúa como especialista en diseño curricular. Tu tarea es crear una unidad didáctica completa para el área de {area_curricular} del grado {grado} de SECUNDARIA.
@@ -1211,7 +1313,7 @@ DEBES generar contenido que sea EXCLUSIVAMENTE apropiado para esta área.
 - Si el área es "Educación Física": el contenido debe ser sobre actividad física, deportes, salud, motricidad, etc.
 - Y así sucesivamente según el área especificada.
 
-NO generes contenido de otras áreas. El título, situación significativa, competencias, desempeños, evidencias y sesiones DEBEN estar relacionados ÚNICAMENTE con el área de {area_curricular}.
+NO generes contenido de otras áreas. El título, situación significativa, competencias, evidencias y sesiones DEBEN estar relacionados ÚNICAMENTE con el área de {area_curricular}.
 
 {contexto_competencia}
 
@@ -1239,39 +1341,31 @@ FORMATO EXACTO REQUERIDO - Copia este formato exactamente (sin agregar nada ante
 | ITEM | CONTENIDO |
 |------|-----------|
 | **TÍTULO DE LA UNIDAD DIDÁCTICA** | Título completo relacionado con el área de {area_curricular} |
-| **SITUACIÓN SIGNIFICATIVA** | Contexto real completo relacionado con el área de {area_curricular}. La situación debe ser significativa y relevante para estudiantes de {grado}° grado en el área de {area_curricular}. Todo el párrafo dentro de esta celda. |
-| **COMPETENCIAS TRANSVERSALES** | Se desenvuelve en entornos virtuales: Estándar: [texto completo del estándar]. Instrumento: [texto completo del instrumento]. Gestiona su aprendizaje de manera autónoma: Estándar: [texto completo del estándar]. Instrumento: [texto completo del instrumento]. TODO dentro de esta misma celda, usando saltos de línea para separar competencias. Solo texto plano, sin viñetas. |
-| **COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS** | 
+| **SITUACIÓN SIGNIFICATIVA** | Contexto real que conecta con la vida de los estudiantes. Situación significativa y relevante para estudiantes de {grado}° grado en el área de {area_curricular}. Todo el párrafo dentro de esta celda. |
+| **COMPETENCIAS TRANSVERSALES** | Redacción de Estándares de aprendizaje e Instrumentos. Se desenvuelve en entornos virtuales: Estándar: [texto completo del estándar de aprendizaje]. Instrumento: [texto completo del instrumento]. Gestiona su aprendizaje de manera autónoma: Estándar: [texto completo del estándar de aprendizaje]. Instrumento: [texto completo del instrumento]. TODO dentro de esta misma celda, usando saltos de línea para separar competencias. Solo texto plano, sin viñetas. |
+| **COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN** | 
 COMPETENCIA(S):
-[REVISA ARRIBA: Si se especificó una competencia obligatoria en la sección "COMPETENCIA OBLIGATORIA", debes usar EXACTAMENTE esa una competencia. Si se especificaron múltiples competencias obligatorias, usa EXACTAMENTE esas. Si NO hay ninguna competencia especificada arriba, entonces selecciona las competencias apropiadas del área de {area_curricular} según el CNEB. CRÍTICO: NO agregues competencias adicionales que no fueron especificadas explícitamente arriba. Si arriba dice "COMPETENCIA OBLIGATORIA" y solo hay una, entonces en esta sección debes listar SOLO esa una competencia, no más.]
+[REVISA ARRIBA: Si se especificó una competencia obligatoria, usa EXACTAMENTE esa. Si se especificaron múltiples, usa EXACTAMENTE esas. Si NO hay ninguna especificada, selecciona las competencias apropiadas del área de {area_curricular} según el CNEB.]
 
 CAPACIDADES:
-[Capacidad 1 del área: descripción completa de la capacidad relacionada con la competencia y el área de {area_curricular}]
-[Capacidad 2 del área: descripción completa de la capacidad relacionada con la competencia y el área de {area_curricular}]
-[Capacidad 3 del área: descripción completa si aplica]
-[Listar todas las capacidades relevantes, cada una en una línea separada con su descripción completa]
+[Capacidad 1 del área: descripción completa relacionada con la competencia y el área de {area_curricular}]
+[Capacidad 2 del área: descripción completa relacionada con la competencia y el área de {area_curricular}]
+[Listar todas las capacidades relevantes, cada una en una línea separada]
 
-DESEMPEÑOS PRECISADOS:
-Desempeño 1: [Descripción completa, específica, observable y medible relacionada con el área de {area_curricular}. Debe incluir qué hace el estudiante, en qué contexto y cómo se evidencia.]
-Desempeño 2: [Descripción completa, específica, observable y medible relacionada con el área de {area_curricular}]
-Desempeño 3: [Descripción completa, específica, observable y medible relacionada con el área de {area_curricular}]
-[Continuar con 8-12 desempeños en total, cada uno numerado y con descripción completa. Cada desempeño debe estar en una línea separada.]
+CRITERIOS DE EVALUACIÓN:
+[Los criterios se desprenden de los estándares de aprendizaje. Criterio 1: descripción que permita evaluar el logro del estándar. Criterio 2: descripción. Criterio 3: descripción. Continuar con los criterios necesarios, cada uno en una línea separada.]
 
-TODO dentro de esta misma celda. Usar saltos de línea para separar las secciones COMPETENCIA(S), CAPACIDADES y DESEMPEÑOS PRECISADOS. Solo texto plano, sin viñetas ni listas con guiones. |
-| **EVIDENCIAS DE APRENDIZAJE** | Evidencia 1: [Verbo + contenido + condición - debe demostrar logro de competencia relacionado con el área de {area_curricular}]
-Evidencia 2: [Verbo + contenido + condición - debe demostrar logro de competencia relacionado con el área de {area_curricular}]
-Cada evidencia debe estar relacionada específicamente con el área de {area_curricular} y demostrar el logro de la competencia del área.
+TODO dentro de esta misma celda. Usar saltos de línea para separar COMPETENCIA(S), CAPACIDADES y CRITERIOS DE EVALUACIÓN. Solo texto plano, sin viñetas ni listas con guiones. |
+| **EVIDENCIAS DE APRENDIZAJE** | Productos o acciones observables. Evidencia 1: [producto o acción observable que demuestre logro de competencia relacionado con el área de {area_curricular}]
+Evidencia 2: [producto o acción observable]
+Cada evidencia debe ser un producto o acción observable, relacionada con el área de {area_curricular} y demostrar el logro de la competencia.
 Todo dentro de esta celda. |
-| **INSTRUMENTOS DE EVALUACIÓN** | Rúbrica: [contenido completo de la rúbrica con todos los niveles]
-Lista de cotejo: [contenido completo]
+| **INSTRUMENTOS DE EVALUACIÓN** | Rúbricas: [contenido completo de la rúbrica con todos los niveles]. Listas de cotejo: [contenido completo]. [Incluir otros instrumentos según corresponda: escalas de valoración, guías de observación, etc.]
 Todo dentro de esta celda. |
-| **VALORES Y ENFOQUES TRANSVERSALES** | Valores: [lista completa]
-Enfoques: [lista completa]
+| **VALORES Y ENFOQUES TRANSVERSALES** | Valores: DEBES usar SOLO estos 13 valores (sin agregar ni omitir): {valores_texto}. Con comportamientos observables para cada uno. Pueden incluir los valores de la matriz axiológica. Enfoques: DEBES usar SOLO estos 8 enfoques transversales (sin agregar ni omitir): {enfoques_texto}. Con comportamientos observables.
 Todo dentro de esta celda. |
-| **SECUENCIA DE SESIONES** | Sesión 1: [título relacionado con el área de {area_curricular}, siguiendo las reglas: pregunta, frase nominal o verbo en 1ra persona plural], actividades: [descripción relacionada con el área], desempeños: [lista relacionada con el área], tiempo: [duración], recursos: [materiales]
-Sesión 2: [título relacionado con el área de {area_curricular}, siguiendo las reglas], actividades: [descripción relacionada con el área], desempeños: [lista relacionada con el área], tiempo: [duración], recursos: [materiales]
-[Continuar con EXACTAMENTE {num_sesiones} sesiones en total, numeradas del 1 al {num_sesiones}]
-Todas las sesiones deben estar relacionadas con el área de {area_curricular}.
+| **SECUENCIA DE SESIONES** | Para cada sesión incluir: Título, Criterio de evaluación y Principales actividades. Sesión 1: Título: [título siguiendo reglas: pregunta, frase nominal o verbo en 1ra persona plural]. Criterio de evaluación: [criterio específico]. Principales actividades: [actividades]. Sesión 2: Título: [título]. Criterio de evaluación: [criterio]. Principales actividades: [actividades]. [Continuar con EXACTAMENTE {num_sesiones} sesiones, numeradas del 1 al {num_sesiones}.]
+Todas las sesiones relacionadas con el área de {area_curricular}.
 Todo dentro de esta celda. |
 
 REGLAS ESTRICTAS DE FORMATO:
@@ -1292,17 +1386,17 @@ INSTRUCCIONES DE CONTENIDO:
 - El contenido DEBE ser apropiado para el área de {area_curricular} en {grado}° grado de educación básica (Perú)
 - Basado en el Currículo Nacional de Educación Básica - MINEDU
 - Lenguaje claro y profesional
-- El título de la unidad, situación significativa, competencias, desempeños, evidencias y sesiones DEBEN estar relacionados ÚNICAMENTE con el área de {area_curricular}
-- Para COMPETENCIAS DE ÁREA: Si arriba se especificó una competencia obligatoria, usa SOLO esa competencia. Si se especificaron múltiples, usa SOLO esas. NO agregues competencias adicionales del área aunque sean relacionadas. Si solo hay una competencia especificada arriba, en la sección "COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS" debes listar EXACTAMENTE esa una competencia, no más.
-- Para COMPETENCIAS TRANSVERSALES: Incluir estándares completos e instrumentos detallados para cada competencia, todo dentro de la misma celda
-- Para COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS: Estructura obligatoria dentro de la celda:
+- El título de la unidad, situación significativa, competencias, evidencias y sesiones DEBEN estar relacionados ÚNICAMENTE con el área de {area_curricular}
+- Para COMPETENCIAS DE ÁREA: Si arriba se especificó una competencia obligatoria, usa SOLO esa competencia. Si se especificaron múltiples, usa SOLO esas. En la sección "COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN" debes listar EXACTAMENTE esa(s) competencia(s), no más.
+- Para COMPETENCIAS TRANSVERSALES: Redacción de Estándares de aprendizaje e Instrumentos. Incluir estándares completos e instrumentos detallados para cada competencia, todo dentro de la misma celda
+- Para VALORES Y ENFOQUES TRANSVERSALES: Usa SOLO los 13 valores y 8 enfoques indicados. Con comportamientos observables. Pueden incluir los valores de la matriz axiológica. Los valores son: {valores_texto}. Los enfoques son: {enfoques_texto}
+- Para COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN: Estructura obligatoria dentro de la celda:
   * Primero: COMPETENCIA(S): Listar la competencia o competencias del área según el CNEB
   * Segundo: CAPACIDADES: Listar todas las capacidades relacionadas con la competencia, cada una con su descripción completa en líneas separadas
-  * Tercero: DESEMPEÑOS PRECISADOS: Entre 8-12 desempeños numerados (Desempeño 1:, Desempeño 2:, etc.), cada uno con descripción completa, específica, observable y medible relacionada con el área de {area_curricular}. Cada desempeño debe indicar qué hace el estudiante, en qué contexto y cómo se evidencia.
-- Para DESEMPEÑOS: Entre 8-12 desempeños específicos, precisos y observables relacionados con el área de {area_curricular}
-- Para EVIDENCIAS DE APRENDIZAJE: Estructura obligatoria: VERBO + CONTENIDO + CONDICIÓN. Cada evidencia debe demostrar claramente que se ha logrado la competencia del área de {area_curricular}. El verbo debe ser observable y medible, el contenido debe referirse al aprendizaje específico del área, y la condición debe indicar cómo o en qué contexto se demuestra.
-- Para INSTRUMENTOS: Rúbricas completas con niveles de logro (Inicio, Proceso, Logrado, Destacado) apropiadas para evaluar aprendizajes del área de {area_curricular}
-- Para SECUENCIA DE SESIONES: EXACTAMENTE {num_sesiones} sesiones con título, actividades, desempeños, tiempo y recursos, todas relacionadas con el área de {area_curricular}. Deben estar numeradas del 1 al {num_sesiones}.
+  * Tercero: CRITERIOS DE EVALUACIÓN: Los criterios se desprenden de los estándares de aprendizaje. Listar los criterios que permitan evaluar el logro, cada uno en una línea separada
+- Para EVIDENCIAS DE APRENDIZAJE: Productos o acciones observables que demuestren el logro de la competencia del área de {area_curricular}
+- Para INSTRUMENTOS DE EVALUACIÓN: Rúbricas, listas de cotejo, escalas de valoración, guías de observación, etc. Rúbricas completas con niveles de logro (Inicio, Proceso, Logrado, Destacado) apropiadas para el área de {area_curricular}
+- Para SECUENCIA DE SESIONES: EXACTAMENTE {num_sesiones} sesiones. Para cada sesión incluir: Título, Criterio de evaluación y Principales actividades. Todo relacionado con el área de {area_curricular}.
 
 REGLAS CRÍTICAS PARA LOS TÍTULOS DE LAS SESIONES:
 El título de cada sesión debe comunicar la actividad principal relacionada con el área de {area_curricular} en función de los propósitos de aprendizaje planteados. 
@@ -1314,15 +1408,8 @@ Puede redactarse de las siguientes formas (elige la más apropiada para cada ses
 Cada título debe ser claro, específico y reflejar directamente el propósito de aprendizaje de esa sesión dentro del área de {area_curricular}.
 
 REGLAS CRÍTICAS PARA LAS EVIDENCIAS DE APRENDIZAJE:
-Cada evidencia debe seguir la estructura: VERBO + CONTENIDO + CONDICIÓN
-Lo importante es que se demuestre que se ha logrado la competencia del área de {area_curricular}.
-
-Estructura obligatoria:
-- VERBO: Acción observable y medible apropiada para el área de {area_curricular} (explica, clasifica, argumenta, identifica, compara, escribe, lee, interpreta, produce, etc.)
-- CONTENIDO: El aprendizaje específico relacionado con la competencia del área de {area_curricular}
-- CONDICIÓN: Cómo o en qué contexto se demuestra el aprendizaje (mediante, utilizando, a través de, etc.)
-
-Cada evidencia debe demostrar claramente el logro de la competencia planteada en la unidad didáctica y estar relacionada específicamente con el área de {area_curricular}.
+Las evidencias son productos o acciones observables que demuestran el logro de la competencia del área de {area_curricular}.
+Cada evidencia debe ser un producto concreto o una acción observable que el estudiante produce o realiza.
 
 EJEMPLO DE FORMATO CORRECTO PARA COMPETENCIAS TRANSVERSALES (dentro de la celda, solo texto plano):
 Se desenvuelve en entornos virtuales: Estándar: Utiliza responsablemente las tecnologías de la información y comunicación para interactuar en entornos virtuales. Instrumento: Lista de cotejo sobre el uso responsable de herramientas digitales.
@@ -1332,7 +1419,7 @@ Gestiona su aprendizaje de manera autónoma: Estándar: Monitorea y ajusta sus p
 Recuerda: TODO debe estar dentro de la estructura de tabla, nada fuera. NO uses viñetas, solo texto plano.
 
 ⚠️ VERIFICACIÓN FINAL SOBRE COMPETENCIAS ⚠️
-Antes de generar, verifica: Si arriba se especificó una competencia obligatoria, en la sección "COMPETENCIAS DE ÁREA, CAPACIDADES Y DESEMPEÑOS PRECISADOS" debes listar EXACTAMENTE esa competencia y ninguna otra. Si se especificaron múltiples competencias obligatorias, lista EXACTAMENTE esas y ninguna otra. NO agregues competencias adicionales por tu cuenta.
+Antes de generar, verifica: Si arriba se especificó una competencia obligatoria, en la sección "COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN" debes listar EXACTAMENTE esa competencia y ninguna otra. Si se especificaron múltiples competencias obligatorias, lista EXACTAMENTE esas y ninguna otra. NO agregues competencias adicionales por tu cuenta.
 """
 
         body = json.dumps({
@@ -1398,7 +1485,7 @@ Antes de generar, verifica: Si arriba se especificó una competencia obligatoria
         print(f"Traceback: {traceback.format_exc()}")
         return f"Error al generar la unidad didáctica: {e}"
 
-def generar_sesion_aprendizaje(titulo_unidad, titulo_sesion, nivel, grado, seccion, duracion):
+def generar_sesion_aprendizaje(titulo_unidad, titulo_sesion, nivel, grado, seccion, duracion, competencias_unidad=None, tema=None, metodologia=None):
     """
     Genera una sesión de aprendizaje completa utilizando un modelo de lenguaje de Bedrock.
     
@@ -1409,9 +1496,25 @@ def generar_sesion_aprendizaje(titulo_unidad, titulo_sesion, nivel, grado, secci
         grado: Grado del nivel
         seccion: Sección del grado
         duracion: Duración de la sesión
+        competencias_unidad: Competencias, capacidades y criterios de la unidad didáctica (opcional)
+        tema: Tema o contenido específico de la sesión (opcional)
+        metodologia: Metodología o enfoque pedagógico (opcional)
     """
     try:
+        # Límite 255 caracteres por propiedad (restricción de API); solo títulos, sin actividades/desempeños
+        LIMITE_CHARS = 255
+        if titulo_unidad and len(titulo_unidad) > LIMITE_CHARS:
+            titulo_unidad = titulo_unidad[:LIMITE_CHARS - 3].rstrip() + "..."
+        if titulo_sesion and len(titulo_sesion) > LIMITE_CHARS:
+            titulo_sesion = titulo_sesion[:LIMITE_CHARS - 3].rstrip() + "..."
+
         bedrock_runtime = crear_cliente_bedrock()
+       
+        # Construir el texto de competencias para el prompt
+        if competencias_unidad:
+            texto_competencias = f"USAR EXACTAMENTE LAS COMPETENCIAS, CAPACIDADES Y CRITERIOS DE EVALUACIÓN DE LA UNIDAD DIDÁCTICA GENERADA ANTERIORMENTE: {competencias_unidad}"
+        else:
+            texto_competencias = "Competencia: [texto]. Capacidades: [capacidad 1], [capacidad 2]. Criterios de evaluación: Criterio 1: [descripción completa]. Criterio 2: [descripción completa]."
        
         prompt = f"""
 Actúa como especialista en diseño de sesiones de aprendizaje. Tu tarea es crear una sesión de aprendizaje completa y detallada.
@@ -1423,6 +1526,8 @@ INFORMACIÓN DE LA SESIÓN:
 - Grado: {grado}
 - Sección: {seccion}
 - Duración: {duracion}
+{f'- Tema: {tema}' if tema else ''}
+{f'- Metodología: {metodologia}' if metodologia else ''}
 
 ⚠️ INSTRUCCIÓN CRÍTICA Y OBLIGATORIA ⚠️
 DEBES GENERAR UNA TABLA EN FORMATO MARKDOWN. TU RESPUESTA DEBE COMENZAR INMEDIATAMENTE CON LA LÍNEA DE ENCABEZADO DE LA TABLA:
@@ -1449,11 +1554,30 @@ FORMATO EXACTO REQUERIDO - Copia este formato exactamente (sin agregar nada ante
 |------|-----------|
 | **DATOS INFORMATIVOS** | Área curricular, Grado y sección: {grado}° {seccion}, Nivel: {nivel}, Duración: {duracion}, Fecha de aplicación |
 | **SITUACIÓN SIGNIFICATIVA** | Contexto real y motivador completo aquí. Todo el párrafo dentro de esta celda. |
-| **COMPETENCIAS, CAPACIDADES Y DESEMPEÑOS PRECISADOS** | Competencia: [texto]. Capacidades: [capacidad 1], [capacidad 2]. Desempeños: Desempeño 1: [descripción completa con características]. Desempeño 2: [descripción completa]. TODO dentro de esta misma celda. Solo texto plano, sin viñetas. |
-| **CRITERIOS DE EVALUACIÓN** | Criterio 1: [descripción completa]. Criterio 2: [descripción completa]. Todo dentro de esta celda. Solo texto plano. |
-| **EVIDENCIA DE APRENDIZAJE** | Descripción completa de la evidencia aquí. Todo dentro de esta celda. Solo texto plano. |
-| **INSTRUMENTO DE EVALUACIÓN** | Rúbrica completa: [contenido completo con todos los niveles y descriptores]. O Lista de cotejo: [contenido completo con todos los indicadores]. Todo dentro de esta celda. Solo texto plano. |
-| **SECUENCIA DIDÁCTICA** | A. MOMENTO DE INICIO (aprox. 20% del tiempo): Inicio con saludo cordial entre estudiantes y docente, recordando los acuerdos de convivencia. Motivación: [actividad que motive según el tema]. Saberes previos: pregunta ¿Qué es …? o similar. Problematización (conflicto cognitivo): pregunta ¿Las…? o pregunta que genere conflicto cognitivo. Propósito y organización: presentar título de la sesión y propósito; compartir criterios de evaluación; presentar el Reto: ¿Cómo [desafío que guíe la sesión]? Reflexionar según respuestas. Los estudiantes se agrupan y [actividad de exploración o trabajo en equipo]. Tiempo: [tiempo]. B. MOMENTO DE DESARROLLO (aprox. 60%): Actividades para construir aprendizaje, resolver el reto y recoger evidencias. Tiempo: [tiempo]. C. MOMENTO DE CIERRE (aprox. 20%): Reflexión sobre lo aprendido, metacognición y conexión con el propósito. Tiempo: [tiempo]. TODO dentro de esta misma celda. |
+| **PROPÓSITOS DE APRENDIZAJE** | Competencias: [listar]. Capacidades: [listar]. Criterios de evaluación: [listar]. Contenidos: [listar]. Evidencia de aprendizaje: [Verbo + contenido + condición - lo importante es que se demuestre que se ha logrado la competencia]. Instrumento de evaluación: [rúbrica, lista de cotejo u otro con niveles/indicadores]. {texto_competencias} TODO dentro de esta misma celda. Solo texto plano, sin viñetas. |
+| **COMPETENCIAS TRANSVERSALES** | Capacidad transversal: [descripción]. Desempeño transversal: [desempeño observable]. TODO dentro de esta celda. Solo texto plano. |
+| **ENFOQUE TRANSVERSAL** | Valor priorizado: [valor]. Valor operativo: [valor operativo]. Comportamientos observables: [descripción de comportamientos observables que evidencian el valor]. TODO dentro de esta celda. Solo texto plano. |
+| **SECUENCIA DIDÁCTICA** | Inicio
+Motivación: Se pide a los estudiantes que [actividad que motive según el tema].
+Saberes previos: ¿Qué es …?
+Problematización (conflicto cognitivo): Se realiza la siguiente pregunta ¿Las…?
+Propósito y organización:
+Se presenta el título de la sesión y el propósito: [propósito específico].
+Se comparte los criterios de evaluación.
+Se presenta el Reto: ¿Cómo [desafío que guíe la sesión]?
+Se reflexiona según las respuestas de los estudiantes.
+Los estudiantes se agrupan y [actividad de exploración o trabajo en equipo].
+Desarrollo
+Gestión y acompañamiento del desarrollo de las competencias (es necesario movilizar todas las capacidades).
+Acercar nueva información: [descripción].
+Construir el conocimiento: [descripción de actividades].
+Aplicar: [descripción de aplicación].
+Cierre
+Conclusiones / Retroalimentación / Metacognición.
+¿Qué se logró? [reflexión sobre lo aprendido].
+Reflexionar, meta aprendizaje: [descripción].
+Aplicar en una nueva situación cotidiana (transferencia): [descripción de cómo se aplica en contexto real].
+TODO dentro de esta misma celda. |
 | **MATERIALES Y RECURSOS** | Materiales para docente: [lista completa]
 Materiales para estudiantes: [lista completa]
 Recursos: [lista completa]
@@ -1472,7 +1596,7 @@ REGLAS ESTRICTAS DE FORMATO:
 6. NO uses viñetas (•, -, *, →, etc.) - SOLO texto plano
 7. Para separar contenido dentro de una celda, usa saltos de línea reales o puntos y comas
 8. Para subsecciones dentro de una celda, usa texto plano con saltos de línea, NO listas con viñetas
-9. Para SECUENCIA DIDÁCTICA, todos los momentos (Inicio, Desarrollo, Cierre) deben estar en la MISMA celda, separados por saltos de línea
+9. Para SECUENCIA DIDÁCTICA, usar Inicio, Desarrollo y Cierre (sin números). Inicio: Motivación, Saberes previos, Problematización, Propósito y organización. Desarrollo: Gestión y acompañamiento, Acercar nueva información, Construir el conocimiento, Aplicar. Cierre: Conclusiones/Retroalimentación/Metacognición, ¿Qué se logró?, Reflexionar meta aprendizaje, Aplicar en nueva situación. Todo dentro de la MISMA celda, separado por saltos de línea.
 10. NO generes tablas anidadas, solo usa texto con saltos de línea dentro de cada celda
 11. El contenido debe ser completo y detallado, pero TODO dentro de la estructura de tabla
 12. Usa solo texto plano, sin formato de listas, sin viñetas, sin guiones para listas
@@ -1481,19 +1605,40 @@ INSTRUCCIONES DE CONTENIDO:
 - La sesión debe ser apropiada para {nivel} - {grado}° grado, sección {seccion}
 - Duración total: {duracion}
 - Basada en el Currículo Nacional de Educación Básica - MINEDU Perú
+{f'- TEMA ESPECÍFICO: La sesión debe desarrollarse en torno al tema: {tema}' if tema else ''}
+{f'- METODOLOGÍA: Debes aplicar el enfoque pedagógico de {metodologia}. Las actividades y secuencia didáctica deben seguir esta metodología.' if metodologia else ''}
 - Las actividades deben ser claras, secuenciales y prácticas
 - Incluir tiempos aproximados para cada momento de la secuencia didáctica
 - Considerar el contexto sociocultural de los estudiantes
 - Promover el aprendizaje activo y participativo
 - Incluir estrategias de atención a la diversidad
+{"⚠️ CRÍTICO - PROPÓSITOS DE APRENDIZAJE: " + ("DEBES USAR EXACTAMENTE las competencias, capacidades y criterios de evaluación de la unidad didáctica en la sección PROPÓSITOS DE APRENDIZAJE. NO inventes competencias diferentes. La evidencia debe seguir Verbo + contenido + condición y demostrar el logro de la competencia." if competencias_unidad else "")}
 
-ESTRUCTURA OBLIGATORIA PARA SECUENCIA DIDÁCTICA (Estrategias / Actividades / Procesos didácticos):
-A. MOMENTO DE INICIO: 1) Saludo cordial y acuerdos de convivencia. 2) Motivación (actividad según tema). 3) Saberes previos (pregunta ej. ¿Qué es …?). 4) Problematización / conflicto cognitivo (pregunta ej. ¿Las…?). 5) Propósito y organización: título de la sesión, propósito, criterios de evaluación. 6) Presentar el Reto (ej. ¿Cómo …?). 7) Reflexión según respuestas. 8) Los estudiantes se agrupan y [actividad de exploración o trabajo en equipo].
-B. MOMENTO DE DESARROLLO: Actividades para construir el aprendizaje, resolver el reto y recoger evidencias.
-C. MOMENTO DE CIERRE: Reflexión sobre lo aprendido, metacognición y conexión con el propósito.
+ESTRUCTURA OBLIGATORIA PARA SECUENCIA DIDÁCTICA:
+La secuencia didáctica DEBE seguir EXACTAMENTE este formato (Inicio, Desarrollo, Cierre):
 
-EJEMPLO DE FORMATO (dentro de la celda, solo texto plano):
-A. MOMENTO DE INICIO (aprox. 20%): Saludo y acuerdos de convivencia. Motivación: [descripción]. Saberes previos: ¿Qué es …? Problematización: ¿Las…? Propósito y reto: ¿Cómo …? Reflexión. Agrupación y [actividad]. Tiempo: [X min]. B. MOMENTO DE DESARROLLO (aprox. 60%): [actividades detalladas]. Tiempo: [X min]. C. MOMENTO DE CIERRE (aprox. 20%): [reflexión y metacognición]. Tiempo: [X min].
+Inicio
+Motivación: Se pide a los estudiantes que [actividad que motive según el tema].
+Saberes previos: ¿Qué es …?
+Problematización (conflicto cognitivo): Se realiza la siguiente pregunta ¿Las…?
+Propósito y organización:
+Se presenta el título de la sesión y el propósito: [propósito específico].
+Se comparte los criterios de evaluación.
+Se presenta el Reto: ¿Cómo [desafío que guíe la sesión]?
+Se reflexiona según las respuestas de los estudiantes.
+Los estudiantes se agrupan y [actividad de exploración o trabajo en equipo].
+
+Desarrollo
+Gestión y acompañamiento del desarrollo de las competencias (es necesario movilizar todas las capacidades).
+Acercar nueva información: [descripción].
+Construir el conocimiento: [descripción de actividades].
+Aplicar: [descripción de aplicación].
+
+Cierre
+Conclusiones / Retroalimentación / Metacognición.
+¿Qué se logró? [reflexión sobre lo aprendido].
+Reflexionar, meta aprendizaje: [descripción].
+Aplicar en una nueva situación cotidiana (transferencia): [descripción de cómo se aplica en contexto real].
 
 Recuerda: TODO debe estar dentro de la estructura de tabla, nada fuera. NO uses viñetas, solo texto plano.
 """

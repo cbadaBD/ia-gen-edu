@@ -19,6 +19,7 @@ _ORIENTACIONES_JSON = "data/orientaciones_pedagogicas_cneb.json"
 _SESION_EF_EPT_JSON = "data/sesion_ef_ept_planificacion_curricular.json"
 _SESION_3_EVAL_JSON = "data/sesion_3_evaluacion_formativa_ef_ept.json"
 _ENFOQUE_MODULO1_JSON = "data/enfoque_por_competencias_modulo1.json"
+_METODOLOGIAS_ACTIVAS_2026_JSON = "data/metodologias_activas_innovacion_educativa_2026.json"
 
 
 def _cargar_json_local(nombre: str) -> Optional[Dict[str, Any]]:
@@ -57,6 +58,11 @@ def _cargar_sesion_3_eval_local() -> Optional[Dict[str, Any]]:
 def _cargar_enfoque_modulo1_local() -> Optional[Dict[str, Any]]:
     """Carga Enfoque por competencias - Módulo 1 (capacitación, planificación y evaluación formativa) desde JSON local."""
     return _cargar_json_local(_ENFOQUE_MODULO1_JSON)
+
+
+def _cargar_metodologias_activas_2026_local() -> Optional[Dict[str, Any]]:
+    """Carga Metodologías Activas para la Innovación Educativa 2026 (Aula Invertida, ABP, Gamificación) desde JSON local."""
+    return _cargar_json_local(_METODOLOGIAS_ACTIVAS_2026_JSON)
 
 
 def _buscar_contexto_local(
@@ -138,6 +144,7 @@ class RAGEducativoService:
         self._sesion_ef_ept_local: Optional[Dict[str, Any]] = _cargar_sesion_ef_ept_local()
         self._sesion_3_eval_local: Optional[Dict[str, Any]] = _cargar_sesion_3_eval_local()
         self._enfoque_modulo1_local: Optional[Dict[str, Any]] = _cargar_enfoque_modulo1_local()
+        self._metodologias_activas_2026_local: Optional[Dict[str, Any]] = _cargar_metodologias_activas_2026_local()
 
     def buscar_contexto_curricular(self, query: str, grado: int, area: str = "ciencia_tecnologia") -> Dict:
         """
@@ -186,6 +193,8 @@ class RAGEducativoService:
             todos_docs.extend(_buscar_contexto_local(query, grado, area, self._sesion_3_eval_local, top_k=5))
         if self._enfoque_modulo1_local:
             todos_docs.extend(_buscar_contexto_local(query, grado, area, self._enfoque_modulo1_local, top_k=5))
+        if self._metodologias_activas_2026_local:
+            todos_docs.extend(_buscar_contexto_local(query, grado, area, self._metodologias_activas_2026_local, top_k=6))
         if todos_docs:
             todos_docs.sort(key=lambda d: d.get("score", 0), reverse=True)
             documentos_finales = todos_docs[:10]
