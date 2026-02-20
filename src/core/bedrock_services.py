@@ -1336,26 +1336,38 @@ CRÍTICO SOBRE EL ORDEN DE COLUMNAS:
 - NUNCA inviertas este orden: | CONTENIDO | ITEM | está INCORRECTO
 - El formato correcto es: | ITEM | CONTENIDO |
 
-FORMATO EXACTO REQUERIDO - Copia este formato exactamente (sin agregar nada antes o después):
+FORMATO EXACTO REQUERIDO - Genera las tablas en este orden exacto:
+
+PRIMERA TABLA - Título y secciones principales:
 
 | ITEM | CONTENIDO |
 |------|-----------|
 | **TÍTULO DE LA UNIDAD DIDÁCTICA** | Título completo relacionado con el área de {area_curricular} |
-| **SITUACIÓN SIGNIFICATIVA** | Contexto real que conecta con la vida de los estudiantes. Situación significativa y relevante para estudiantes de {grado}° grado en el área de {area_curricular}. Todo el párrafo dentro de esta celda. |
-| **COMPETENCIAS TRANSVERSALES** | Redacción de Estándares de aprendizaje e Instrumentos. Se desenvuelve en entornos virtuales: Estándar: [texto completo del estándar de aprendizaje]. Instrumento: [texto completo del instrumento]. Gestiona su aprendizaje de manera autónoma: Estándar: [texto completo del estándar de aprendizaje]. Instrumento: [texto completo del instrumento]. TODO dentro de esta misma celda, usando saltos de línea para separar competencias. Solo texto plano, sin viñetas. |
-| **COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN** | 
-COMPETENCIA(S):
-[REVISA ARRIBA: Si se especificó una competencia obligatoria, usa EXACTAMENTE esa. Si se especificaron múltiples, usa EXACTAMENTE esas. Si NO hay ninguna especificada, selecciona las competencias apropiadas del área de {area_curricular} según el CNEB.]
 
-CAPACIDADES:
-[Capacidad 1 del área: descripción completa relacionada con la competencia y el área de {area_curricular}]
-[Capacidad 2 del área: descripción completa relacionada con la competencia y el área de {area_curricular}]
-[Listar todas las capacidades relevantes, cada una en una línea separada]
+SEGUNDA TABLA - II. SITUACIÓN SIGNIFICATIVA (TABLA SEPARADA):
 
-CRITERIOS DE EVALUACIÓN:
-[Los criterios se desprenden de los estándares de aprendizaje. Criterio 1: descripción que permita evaluar el logro del estándar. Criterio 2: descripción. Criterio 3: descripción. Continuar con los criterios necesarios, cada uno en una línea separada.]
+| ITEM | CONTENIDO |
+|------|-----------|
+| **II. SITUACIÓN SIGNIFICATIVA** | Contexto real que conecta con la vida de los estudiantes. Situación significativa y relevante para estudiantes de {grado}° grado en el área de {area_curricular}. Todo el párrafo dentro de esta celda. |
 
-TODO dentro de esta misma celda. Usar saltos de línea para separar COMPETENCIA(S), CAPACIDADES y CRITERIOS DE EVALUACIÓN. Solo texto plano, sin viñetas ni listas con guiones. |
+TERCERA TABLA - III. PROPÓSITOS DE APRENDIZAJE (TABLA SEPARADA):
+
+| ITEM | CONTENIDO |
+|------|-----------|
+| **III. PROPÓSITOS DE APRENDIZAJE** | 
+Competencias: [listar competencias del área]
+Capacidades: [listar capacidades relacionadas con las competencias]
+Criterios de evaluación: [listar criterios que se desprenden de los estándares de aprendizaje]
+Contenidos: [listar contenidos curriculares]
+Evidencia de aprendizaje: [Verbo + contenido + condición - lo importante es que se demuestre que se ha logrado la competencia]
+Instrumento de evaluación: [rúbrica, lista de cotejo u otro con niveles/indicadores]
+
+TODO dentro de esta misma celda. Solo texto plano, sin viñetas. |
+
+CUARTA TABLA - Otras secciones:
+
+| ITEM | CONTENIDO |
+|------|-----------|
 | **EVIDENCIAS DE APRENDIZAJE** | Productos o acciones observables. Evidencia 1: [producto o acción observable que demuestre logro de competencia relacionado con el área de {area_curricular}]
 Evidencia 2: [producto o acción observable]
 Cada evidencia debe ser un producto o acción observable, relacionada con el área de {area_curricular} y demostrar el logro de la competencia.
@@ -1368,32 +1380,48 @@ Todo dentro de esta celda. |
 Todas las sesiones relacionadas con el área de {area_curricular}.
 Todo dentro de esta celda. |
 
+QUINTA TABLA - COMPETENCIAS TRANSVERSALES (TABLA SEPARADA DE 3 COLUMNAS):
+
+| Competencias transversales | Estándares de aprendizaje | Instrumento |
+|----------------------------|---------------------------|-------------|
+| Se desenvuelve en los entornos virtuales generados por las TIC. | [DEBES generar el estándar de aprendizaje completo y específico relacionado con esta competencia transversal. Debe ser un estándar del Currículo Nacional que corresponda al grado {grado} y que se relacione con el uso de TIC. Ejemplo: "Se desenvuelve en entornos virtuales cuando interactúa con herramientas digitales para comunicarse, investigar y crear contenidos, demostrando responsabilidad y seguridad digital."] | [DEBES generar el instrumento de evaluación completo y específico. Ejemplo: "Lista de cotejo para evaluar el uso responsable de herramientas TIC en actividades de aprendizaje" o "Rúbrica para evaluar la creación de contenidos digitales". Debe ser un instrumento concreto y aplicable.] |
+| Gestiona su aprendizaje de manera autónoma. | [DEBES generar el estándar de aprendizaje completo y específico relacionado con esta competencia transversal. Debe ser un estándar del Currículo Nacional que corresponda al grado {grado} y que se relacione con la autonomía en el aprendizaje. Ejemplo: "Gestiona su aprendizaje cuando planifica sus actividades de estudio, monitorea su progreso, identifica sus fortalezas y dificultades, y busca estrategias para mejorar su desempeño."] | [DEBES generar el instrumento de evaluación completo y específico. Ejemplo: "Rúbrica para evaluar la planificación y autoevaluación del aprendizaje" o "Lista de cotejo para evaluar la autonomía en la gestión del aprendizaje". Debe ser un instrumento concreto y aplicable.] |
+
 REGLAS ESTRICTAS DE FORMATO:
-1. SOLO genera la tabla con el formato exacto mostrado arriba
-2. Cada fila debe tener exactamente: | **NOMBRE ITEM** | [contenido] |
-3. TODO el contenido debe estar dentro de las celdas de la derecha
-4. NO generes títulos, subtítulos o contenido fuera de la tabla
-5. NO uses etiquetas HTML (<br>, <p>, etc.)
-6. NO uses viñetas (•, -, *, →, etc.) - SOLO texto plano
-7. Para separar contenido dentro de una celda, usa saltos de línea reales o puntos y comas
-8. Para subsecciones dentro de una celda, usa texto plano con saltos de línea, NO listas con viñetas
-9. Si hay múltiples competencias transversales, todas deben estar en la MISMA celda, separadas por saltos de línea
-10. NO generes tablas anidadas, solo usa texto con saltos de línea dentro de cada celda
-11. El contenido debe ser completo y detallado, pero TODO dentro de la estructura de tabla
-12. Usa solo texto plano, sin formato de listas, sin viñetas, sin guiones para listas
+1. DEBES generar MÚLTIPLES TABLAS SEPARADAS en este orden exacto:
+   - Primera tabla: TÍTULO DE LA UNIDAD DIDÁCTICA (1 fila)
+   - Segunda tabla: II. SITUACIÓN SIGNIFICATIVA (1 fila, TABLA SEPARADA)
+   - Tercera tabla: III. PROPÓSITOS DE APRENDIZAJE (1 fila, TABLA SEPARADA)
+   - Cuarta tabla: EVIDENCIAS, INSTRUMENTOS, VALORES Y ENFOQUES, SECUENCIA DE SESIONES (múltiples filas)
+   - Quinta tabla: COMPETENCIAS TRANSVERSALES (3 columnas, TABLA SEPARADA)
+2. Cada tabla debe estar separada por al menos una línea en blanco
+3. Cada fila debe tener exactamente: | **NOMBRE ITEM** | [contenido] | (excepto la tabla de 3 columnas)
+4. TODO el contenido debe estar dentro de las celdas de la derecha
+5. NO generes títulos, subtítulos o contenido fuera de las tablas
+6. NO uses etiquetas HTML (<br>, <p>, etc.)
+7. NO uses viñetas (•, -, *, →, etc.) - SOLO texto plano
+8. Para separar contenido dentro de una celda, usa saltos de línea reales o puntos y comas
+9. Para subsecciones dentro de una celda, usa texto plano con saltos de línea, NO listas con viñetas
+10. COMPETENCIAS TRANSVERSALES debe ser una TABLA SEPARADA con 3 columnas después de todas las demás tablas
+11. NO generes tablas anidadas dentro de las celdas de las tablas principales, solo usa texto con saltos de línea dentro de cada celda
+12. El contenido debe ser completo y detallado, pero TODO dentro de la estructura de tabla
+13. Usa solo texto plano, sin formato de listas, sin viñetas, sin guiones para listas
+14. CRÍTICO: Cada tabla debe tener su propio encabezado | ITEM | CONTENIDO | y separador |------|-----------| antes de las filas de datos
 
 INSTRUCCIONES DE CONTENIDO:
 - El contenido DEBE ser apropiado para el área de {area_curricular} en {grado}° grado de educación básica (Perú)
 - Basado en el Currículo Nacional de Educación Básica - MINEDU
 - Lenguaje claro y profesional
 - El título de la unidad, situación significativa, competencias, evidencias y sesiones DEBEN estar relacionados ÚNICAMENTE con el área de {area_curricular}
-- Para COMPETENCIAS DE ÁREA: Si arriba se especificó una competencia obligatoria, usa SOLO esa competencia. Si se especificaron múltiples, usa SOLO esas. En la sección "COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN" debes listar EXACTAMENTE esa(s) competencia(s), no más.
-- Para COMPETENCIAS TRANSVERSALES: Redacción de Estándares de aprendizaje e Instrumentos. Incluir estándares completos e instrumentos detallados para cada competencia, todo dentro de la misma celda
+- Para PROPÓSITOS DE APRENDIZAJE: Estructura obligatoria dentro de la celda:
+  * Competencias: Listar la competencia o competencias del área según el CNEB. Si arriba se especificó una competencia obligatoria, usa SOLO esa competencia. Si se especificaron múltiples, usa SOLO esas.
+  * Capacidades: Listar todas las capacidades relacionadas con la competencia, cada una con su descripción completa en líneas separadas
+  * Criterios de evaluación: Los criterios se desprenden de los estándares de aprendizaje. Listar los criterios que permitan evaluar el logro, cada uno en una línea separada
+  * Contenidos: Listar los contenidos curriculares relacionados con el área
+  * Evidencia de aprendizaje: Verbo + contenido + condición - lo importante es que se demuestre que se ha logrado la competencia
+  * Instrumento de evaluación: Rúbrica, lista de cotejo u otro con niveles/indicadores
+- Para COMPETENCIAS TRANSVERSALES: DEBES generar una TABLA SEPARADA después de la tabla principal con 3 columnas: "Competencias transversales" | "Estándares de aprendizaje" | "Instrumento". Incluir las dos competencias transversales obligatorias: "Se desenvuelve en los entornos virtuales generados por las TIC." y "Gestiona su aprendizaje de manera autónoma." Cada fila debe tener el estándar completo y el instrumento completo en sus respectivas columnas.
 - Para VALORES Y ENFOQUES TRANSVERSALES: Usa SOLO los 13 valores y 8 enfoques indicados. Con comportamientos observables. Pueden incluir los valores de la matriz axiológica. Los valores son: {valores_texto}. Los enfoques son: {enfoques_texto}
-- Para COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN: Estructura obligatoria dentro de la celda:
-  * Primero: COMPETENCIA(S): Listar la competencia o competencias del área según el CNEB
-  * Segundo: CAPACIDADES: Listar todas las capacidades relacionadas con la competencia, cada una con su descripción completa en líneas separadas
-  * Tercero: CRITERIOS DE EVALUACIÓN: Los criterios se desprenden de los estándares de aprendizaje. Listar los criterios que permitan evaluar el logro, cada uno en una línea separada
 - Para EVIDENCIAS DE APRENDIZAJE: Productos o acciones observables que demuestren el logro de la competencia del área de {area_curricular}
 - Para INSTRUMENTOS DE EVALUACIÓN: Rúbricas, listas de cotejo, escalas de valoración, guías de observación, etc. Rúbricas completas con niveles de logro (Inicio, Proceso, Logrado, Destacado) apropiadas para el área de {area_curricular}
 - Para SECUENCIA DE SESIONES: EXACTAMENTE {num_sesiones} sesiones. Para cada sesión incluir: Título, Criterio de evaluación y Principales actividades. Todo relacionado con el área de {area_curricular}.
@@ -1411,15 +1439,17 @@ REGLAS CRÍTICAS PARA LAS EVIDENCIAS DE APRENDIZAJE:
 Las evidencias son productos o acciones observables que demuestran el logro de la competencia del área de {area_curricular}.
 Cada evidencia debe ser un producto concreto o una acción observable que el estudiante produce o realiza.
 
-EJEMPLO DE FORMATO CORRECTO PARA COMPETENCIAS TRANSVERSALES (dentro de la celda, solo texto plano):
-Se desenvuelve en entornos virtuales: Estándar: Utiliza responsablemente las tecnologías de la información y comunicación para interactuar en entornos virtuales. Instrumento: Lista de cotejo sobre el uso responsable de herramientas digitales.
+EJEMPLO DE FORMATO CORRECTO PARA COMPETENCIAS TRANSVERSALES (tabla separada con 3 columnas):
 
-Gestiona su aprendizaje de manera autónoma: Estándar: Monitorea y ajusta sus procesos de aprendizaje, utilizando estrategias que respondan a sus características y necesidades. Instrumento: Rúbrica para evaluar la autorregulación del aprendizaje.
+| **Competencias transversales** | **Estándares de aprendizaje** | **Instrumento** |
+|--------------------------------|-------------------------------|-----------------|
+| Se desenvuelve en los entornos virtuales generados por las TIC. | Utiliza responsablemente las tecnologías de la información y comunicación para interactuar en entornos virtuales. | Lista de cotejo sobre el uso responsable de herramientas digitales. |
+| Gestiona su aprendizaje de manera autónoma. | Monitorea y ajusta sus procesos de aprendizaje, utilizando estrategias que respondan a sus características y necesidades. | Rúbrica para evaluar la autorregulación del aprendizaje. |
 
-Recuerda: TODO debe estar dentro de la estructura de tabla, nada fuera. NO uses viñetas, solo texto plano.
+Recuerda: La tabla de COMPETENCIAS TRANSVERSALES debe estar FUERA de la tabla principal, como una tabla separada después de la tabla principal.
 
 ⚠️ VERIFICACIÓN FINAL SOBRE COMPETENCIAS ⚠️
-Antes de generar, verifica: Si arriba se especificó una competencia obligatoria, en la sección "COMPETENCIAS DE ÁREA, CAPACIDADES, CRITERIOS DE EVALUACIÓN" debes listar EXACTAMENTE esa competencia y ninguna otra. Si se especificaron múltiples competencias obligatorias, lista EXACTAMENTE esas y ninguna otra. NO agregues competencias adicionales por tu cuenta.
+Antes de generar, verifica: Si arriba se especificó una competencia obligatoria, en la sección "PROPÓSITOS DE APRENDIZAJE" debes listar EXACTAMENTE esa competencia y ninguna otra. Si se especificaron múltiples competencias obligatorias, lista EXACTAMENTE esas y ninguna otra. NO agregues competencias adicionales por tu cuenta.
 """
 
         body = json.dumps({
